@@ -1,0 +1,109 @@
+/* Admin UI shell - P1 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    background-color: #0f172a;
+    color: #e2e8f0;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.admin-app {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "header header"
+        "sidebar main";
+    min-height: 100vh;
+}
+
+.admin-header {
+    grid-area: header;
+    background-color: #1e293b;
+    border-bottom: 1px solid #334155;
+    padding: 14px 24px;
+}
+
+.admin-logo {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.admin-sidebar {
+    grid-area: sidebar;
+    background-color: #1e293b;
+    border-right: 1px solid #334155;
+    padding: 16px 0;
+}
+
+.admin-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin-nav-link {
+    display: block;
+    padding: 10px 20px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.9375rem;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.admin-nav-link:hover {
+    background-color: #334155;
+    color: #e2e8f0;
+}
+
+.admin-nav-link.active {
+    background-color: #334155;
+    color: #38bdf8;
+    font-weight: 500;
+}
+
+.admin-main {
+    grid-area: main;
+    overflow: auto;
+    padding: 24px;
+}
+
+.admin-content {
+    max-width: 1200px;
+}
+
+.admin-placeholder {
+    color: #94a3b8;
+    font-size: 1rem;
+}
+
+.admin-page-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 16px;
+}
+
+.admin-card {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.admin-iframe {
+    width: 100%;
+    min-height: 80vh;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background-color: #0f172a;
+}

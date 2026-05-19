@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxor System Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/dashboard.css">
+    <script src="https://unpkg.com/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Fluxor System Dashboard</h1>
+            <div class="header-controls">
+                <span id="refresh-indicator" class="refresh-indicator">●</span>
+                <span id="last-update" class="last-update">Loading...</span>
+            </div>
+        </header>
+
+        <div class="metrics-grid">
+            <!-- Metrics Cards -->
+            <div class="metric-card" id="queue-card">
+                <div class="metric-label">Queue Length</div>
+                <div class="metric-value" id="queue-value">-</div>
+                <div class="metric-detail" id="queue-detail">-</div>
+            </div>
+
+            <div class="metric-card" id="throughput-card">
+                <div class="metric-label">Throughput</div>
+                <div class="metric-value" id="throughput-value">-</div>
+                <div class="metric-detail" id="throughput-detail">tasks/sec</div>
+            </div>
+
+            <div class="metric-card" id="worker-card">
+                <div class="metric-label">Worker Utilization</div>
+                <div class="metric-value" id="worker-value">-</div>
+                <div class="metric-detail" id="worker-detail">-</div>
+            </div>
+
+            <div class="metric-card" id="rps-card">
+                <div class="metric-label">Requests/sec</div>
+                <div class="metric-value" id="rps-value">-</div>
+                <div class="metric-detail" id="rps-detail">HTTP RPS</div>
+            </div>
+
+            <div class="metric-card" id="goroutines-card">
+                <div class="metric-label">Goroutines</div>
+                <div class="metric-value" id="goroutines-value">-</div>
+                <div class="metric-detail" id="goroutines-detail">-</div>
+            </div>
+
+            <div class="metric-card" id="alloc-rate-card">
+                <div class="metric-label">Alloc Rate</div>
+                <div class="metric-value" id="alloc-rate-value">-</div>
+                <div class="metric-detail" id="alloc-rate-detail">allocs/sec</div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>Throughput Chart (Last 1 minute)</h2>
+                    <select id="metric-type-selector" class="metric-selector">
+                        <option value="tasks">Tasks/sec</option>
+                        <option value="rps" selected>RPS (Requests/sec)</option>
+                        <option value="network">Network (bytes/sec)</option>
+                    </select>
+                </div>
+                <canvas id="throughput-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="statistics-section">
+            <h2>Runtime Metrics</h2>
+            <div class="stats-table">
+                <table id="runtime-stats-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="runtime-stats-body">
+                        <tr>
+                            <td colspan="3" class="no-data">Loading metrics...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="statistics-section">
+            <h2>HTTP Server Statistics</h2>
+            <div class="stats-table">
+                <table id="http-stats-table">
+                    <thead>
+                        <tr>
+                            <th>Server</th>
+                            <th>RPS</th>
+                            <th>Queued</th>
+                            <th>Queue Util %</th>
+                            <th>Rejected</th>
+                            <th>CCU</th>
+                            <th>CCU Util %</th>
+                            <th>Workers</th>
+                        </tr>
+                    </thead>
+                    <tbody id="http-stats-body">
+                        <tr>
+                            <td colspan="8" class="no-data">Loading metrics...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="statistics-section" id="profiling-section" style="display: none;">
+            <h2>Profiling & Bottlenecks</h2>
+            <div id="profiling-content">
+                <div class="profiling-grid">
+                    <div class="profiling-card">
+                        <h3>Work Classification</h3>
+                        <div id="work-classification">-</div>
+                    </div>
+                    <div class="profiling-card">
+                        <h3>Bottlenecks</h3>
+                        <div id="bottlenecks">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="statistics-section">
+            <h2>Task Statistics</h2>
+            <div class="stats-table">
+                <table id="stats-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Queued</th>
+                            <th>Queue Util %</th>
+                            <th>Throughput</th>
+                            <th>Worker Util %</th>
+                            <th>Completed</th>
+                            <th>Rejected</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-body">
+                        <tr>
+                            <td colspan="8" class="no-data">Loading metrics...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/dashboard.js"></script>
+</body>
+</html>
+

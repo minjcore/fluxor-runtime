@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxor Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="admin-app">
+        <header class="admin-header">
+            <h1 class="admin-logo">Fluxor Admin</h1>
+        </header>
+        <aside class="admin-sidebar">
+            <nav class="admin-nav">
+                <a class="admin-nav-link" href="dashboard" data-page="dashboard">Dashboard</a>
+                <a class="admin-nav-link" href="storage" data-page="storage">Storage</a>
+                <a class="admin-nav-link" href="ci" data-page="ci">CI</a>
+            </nav>
+        </aside>
+        <main class="admin-main">
+            <div id="admin-content" class="admin-content">
+                <p class="admin-placeholder">Loading...</p>
+            </div>
+        </main>
+    </div>
+    <script src="admin.js"></script>
+</body>
+</html>

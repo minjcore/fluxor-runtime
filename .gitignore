@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Environment (không commit secret)
+.env
+.env.local
+.env.*.local
+
+# Sub-repos (managed independently)
+mob/
+languages/
+thagore/
+fluxor-font/
+cmd/ssr-example/
+
+# Build artifacts
+bin/
+coverage.out
+*.test
+vendor/

@@ -5,17 +5,21 @@ import (
 	"runtime"
 	"sync/atomic"
 	"time"
+	"unsafe"
+
+	"github.com/fluxorio/fluxor/pkg/hft/protocol"
 )
 
-// EventLoop represents a single event loop running on one goroutine
+// EventLoop represents a single event loop running on one goroutine.
+// The internal queue is a lock-free LMAX Disruptor RingBuffer.
 type EventLoop struct {
-	id      int
-	queue   chan *Event
-	ctx     context.Context
-	cancel  context.CancelFunc
-	config  EventLoopConfig
-	metrics *LoopMetrics
-	closed  int32
+	id         int
+	ringBuffer *protocol.RingBuffer
+	ctx        context.Context
+	cancel     context.CancelFunc
+	config     EventLoopConfig
+	metrics    *LoopMetrics
+	closed     int32
 }
 
 // Event represents a message to be processed
@@ -27,57 +31,72 @@ type Event struct {
 	Handler func(ctx context.Context, event *Event) error
 }
 
-// NewEventLoop creates a new event loop
+// nextPow2 rounds n up to the nearest power of 2 (minimum 2).
+func nextPow2(n int) int {
+	if n < 2 {
+		return 2
+	}
+	n--
+	n |= n >> 1
+	n |= n >> 2
+	n |= n >> 4
+	n |= n >> 8
+	n |= n >> 16
+	n++
+	return n
+}
+
+// NewEventLoop creates a new event loop backed by a Disruptor RingBuffer.
+// config.QueueSize is rounded up to the next power of 2 as required by the ring buffer.
 func NewEventLoop(id int, parentCtx context.Context, config EventLoopConfig) *EventLoop {
 	ctx, cancel := context.WithCancel(parentCtx)
 
+	size := nextPow2(config.QueueSize)
+	rb := protocol.NewRingBuffer(size, protocol.YieldWait)
+
 	loop := &EventLoop{
-		id:     id,
-		queue:  make(chan *Event, config.QueueSize),
-		ctx:    ctx,
-		cancel: cancel,
-		config: config,
+		id:         id,
+		ringBuffer: rb,
+		ctx:        ctx,
+		cancel:     cancel,
+		config:     config,
 		metrics: &LoopMetrics{
 			LoopID: id,
 		},
 	}
 
-	// Start the loop goroutine
 	go loop.run()
-
 	return loop
 }
 
-// run is the main event loop goroutine
+// run is the main event loop goroutine.
 func (l *EventLoop) run() {
-	// Optional CPU affinity: pin goroutine to CPU core
 	if l.config.CPUAffinity {
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 	}
 
+	next := int64(0)
 	for {
-		select {
-		case event, ok := <-l.queue:
-			if !ok {
-				return // Channel closed
-			}
+		// WaitFor returns when sequence `next` (or higher) is published.
+		// Returns error only on context cancellation.
+		avail, err := l.ringBuffer.WaitFor(next, l.ctx)
+		if err != nil {
+			return
+		}
 
-			// Update queue length
-			if l.config.Metrics {
-				atomic.AddInt64(&l.metrics.QueueLength, -1)
-			}
+		// Process all events from `next` to `avail`, consuming each slot
+		// immediately after handling so producers can reclaim capacity.
+		// Consuming per-event (not per-batch) means a blocking handler does
+		// not starve the producer beyond the single occupied slot.
+		for seq := next; seq <= avail; seq++ {
+			event := (*Event)(l.ringBuffer.Get(seq))
 
-			// Process event
 			startTime := time.Now()
-			if event.Handler != nil {
-				if err := event.Handler(l.ctx, event); err != nil {
-					// Log error but don't crash
-					// Error handling is up to the handler
-				}
+			if event != nil && event.Handler != nil {
+				_ = event.Handler(l.ctx, event)
 			}
 
-			// Update metrics
 			if l.config.Metrics {
 				latency := time.Since(startTime)
 				atomic.AddInt64(&l.metrics.ProcessedMessages, 1)
@@ -92,82 +111,73 @@ func (l *EventLoop) run() {
 				atomic.StoreInt64((*int64)(&l.metrics.AvgLatency), updated)
 			}
 
-		case <-l.ctx.Done():
-			return // Context cancelled
+			l.ringBuffer.Consume(seq)
 		}
+
+		next = avail + 1
 	}
 }
 
-// Dispatch dispatches an event to this loop
+// Dispatch sends an event to this loop's ring buffer.
+//
+// BackpressureDrop:  returns QUEUE_FULL error immediately if the ring is full.
+// BackpressureBlock: spins (with Gosched yields) until a slot is free or the
+// context is cancelled — equivalent to blocking on a buffered channel.
 func (l *EventLoop) Dispatch(event *Event) error {
 	if atomic.LoadInt32(&l.closed) == 1 {
 		return &EventLoopError{Code: "CLOSED", Message: "event loop is closed"}
 	}
 
-	// Update queue length
-	if l.config.Metrics {
-		atomic.AddInt64(&l.metrics.QueueLength, 1)
-	}
+	ptr := unsafe.Pointer(event)
 
-	// Handle backpressure
 	switch l.config.Backpressure {
-	case BackpressureBlock:
-		// Block until queue has space or context cancelled
-		select {
-		case l.queue <- event:
-			return nil
-		case <-l.ctx.Done():
-			return l.ctx.Err()
-		}
-
 	case BackpressureDrop:
-		// Non-blocking: drop if queue is full
-		select {
-		case l.queue <- event:
-			return nil
-		default:
-			// Queue full, drop message
+		seq := l.ringBuffer.Next()
+		if seq < 0 {
 			if l.config.Metrics {
 				atomic.AddInt64(&l.metrics.DroppedMessages, 1)
 			}
 			return &EventLoopError{Code: "QUEUE_FULL", Message: "queue is full, message dropped"}
 		}
+		l.ringBuffer.Publish(seq, ptr)
 
-	default:
-		// Default to block
-		select {
-		case l.queue <- event:
-			return nil
-		case <-l.ctx.Done():
-			return l.ctx.Err()
+	default: // BackpressureBlock
+		for {
+			if atomic.LoadInt32(&l.closed) == 1 || l.ctx.Err() != nil {
+				return l.ctx.Err()
+			}
+			seq := l.ringBuffer.Next()
+			if seq >= 0 {
+				l.ringBuffer.Publish(seq, ptr)
+				break
+			}
+			runtime.Gosched()
 		}
 	}
-}
-
-// Close closes the event loop
-func (l *EventLoop) Close() error {
-	if !atomic.CompareAndSwapInt32(&l.closed, 0, 1) {
-		return nil // Already closed
-	}
-
-	// Cancel context to stop the loop
-	l.cancel()
-
-	// Close queue channel
-	close(l.queue)
 
 	return nil
 }
 
-// Stats returns current loop statistics
+// Close stops the event loop. Idempotent.
+func (l *EventLoop) Close() error {
+	if !atomic.CompareAndSwapInt32(&l.closed, 0, 1) {
+		return nil
+	}
+	l.cancel()
+	return nil
+}
+
+// Stats returns current loop statistics.
 func (l *EventLoop) Stats() LoopMetrics {
 	if !l.config.Metrics {
 		return LoopMetrics{LoopID: l.id}
 	}
 
+	queueLen := l.ringBuffer.Size() - l.ringBuffer.AvailableCapacity()
+
 	return LoopMetrics{
 		LoopID:            l.id,
-		QueueLength:       atomic.LoadInt64(&l.metrics.QueueLength),
+		QueueLength:       queueLen,
 		DroppedMessages:   atomic.LoadInt64(&l.metrics.DroppedMessages),
 		ProcessedMessages: atomic.LoadInt64(&l.metrics.ProcessedMessages),
 		AvgLatency:        time.Duration(atomic.LoadInt64((*int64)(&l.metrics.AvgLatency))),

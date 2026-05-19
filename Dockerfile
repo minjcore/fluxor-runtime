@@ -11,7 +11,7 @@
 #
 # License: Proprietary - All Rights Reserved
 # For licensing inquiries, please contact: caokhang91@gmail.com
-FROM golang:1.24 AS builder
+FROM golang:1.25 AS builder
 
 WORKDIR /src
 

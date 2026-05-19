@@ -30,7 +30,6 @@ import (
 	"github.com/fluxorio/fluxor/pkg/observability/prometheus"
 	"github.com/fluxorio/fluxor/pkg/web"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
@@ -212,17 +211,6 @@ func setupApplication(deps map[reflect.Type]interface{}) error {
 			"server":  "fluxor",
 			"version": "1.0.0",
 		})
-	})
-
-	// Update server handler to use router
-	server.SetHandler(func(ctx *fasthttp.RequestCtx) {
-		reqCtx := &web.FastRequestContext{
-			RequestCtx: ctx,
-			GoCMD:      gocmd,
-			EventBus:   gocmd.EventBus(),
-			Params:     make(map[string]string),
-		}
-		router.ServeFastHTTP(reqCtx)
 	})
 
 	// Start server in goroutine

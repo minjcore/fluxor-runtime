@@ -1,0 +1,91 @@
+package main
+
+import (
+	"log"
+
+	"github.com/fluxorio/fluxor/pkg/core"
+	"github.com/fluxorio/fluxor/pkg/entrypoint"
+	"github.com/fluxorio/fluxor/pkg/web"
+)
+
+func main() {
+	// Create MainVerticle with config
+	app, err := entrypoint.NewMainVerticle("config.json")
+	if err != nil {
+		log.Fatalf("Failed to create app: %v", err)
+	}
+
+	// Deploy API verticle
+	_, err = app.DeployVerticle(NewApiVerticle())
+	if err != nil {
+		log.Fatalf("Failed to deploy API verticle: %v", err)
+	}
+
+	// Start application
+	if err := app.Start(); err != nil {
+		log.Fatalf("Failed to start app: %v", err)
+	}
+}
+
+// ApiVerticle handles HTTP endpoints
+type ApiVerticle struct {
+	server *web.FastHTTPServer
+}
+
+func NewApiVerticle() *ApiVerticle {
+	return &ApiVerticle{}
+}
+
+func (v *ApiVerticle) Start(ctx core.FluxorContext) error {
+	log.Println("API Verticle started")
+
+	// Get HTTP address from config
+	addr := ":8080"
+	if val, ok := ctx.Config()["http_addr"].(string); ok && val != "" {
+		addr = val
+	}
+
+	// Create FastHTTPServer using context's GoCMD
+	cfg := web.DefaultFastHTTPServerConfig(addr)
+	v.server = web.NewFastHTTPServer(ctx.GoCMD(), cfg)
+
+	// Setup routes
+	router := v.server.FastRouter()
+
+	// Health check endpoint
+	router.GETFast("/health", func(c *web.FastRequestContext) error {
+		return c.JSON(200, map[string]interface{}{
+			"status":  "UP",
+			"service": "{{.AppName}}",
+		})
+	})
+
+	// Example API endpoint
+	router.GETFast("/api/hello", func(c *web.FastRequestContext) error {
+		return c.JSON(200, map[string]interface{}{
+			"message": "Hello from Fluxor!",
+		})
+	})
+
+	// Start server
+	go func() {
+		log.Printf("HTTP server starting on %s", addr)
+		if err := v.server.Start(); err != nil {
+			log.Printf("Server error: %v", err)
+		}
+	}()
+
+	log.Println("API endpoints registered:")
+	log.Println("  GET /health - Health check")
+	log.Println("  GET /api/hello - Hello endpoint")
+
+	return nil
+}
+
+func (v *ApiVerticle) Stop(ctx core.FluxorContext) error {
+	log.Println("API Verticle stopped")
+	if v.server != nil {
+		return v.server.Stop()
+	}
+	return nil
+}

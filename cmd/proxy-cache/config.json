@@ -1,0 +1,20 @@
+{
+  "port": 8080,
+  "host": "0.0.0.0",
+  "verbose": false,
+  "cache_dir": "./proxycache",
+  "cache_type": "memory",
+  "cache_ttl": 86400000000000,
+  "max_cache_size": 10737418240,
+  "redis_addr": "localhost:6379",
+  "redis_password": "",
+  "redis_db": 0,
+  "upstream": "https://proxy.golang.org",
+  "upstream_timeout": 30000000000,
+  "allowed_origins": ["*"],
+  "api_key": "",
+  "max_concurrent": 100,
+  "rate_limit": 1000,
+  "cleanup_interval": 600000000000,
+  "max_file_age": 604800000000000
+}

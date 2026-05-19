@@ -1,0 +1,8 @@
+[2026-01-21 02:00:01] ================================================
+[2026-01-21 02:00:01] Starting vulnerability scan with govulncheck
+[2026-01-21 02:00:01] Script location: /Users/khangdc/fluxor-runtime/cmd/proxy-cache
+[2026-01-21 02:00:01] Root project directory: /Users/khangdc/fluxor-runtime
+[2026-01-21 02:00:01] Working directory: /Users/khangdc/fluxor-runtime
+[2026-01-21 02:00:01] ================================================
+[2026-01-21 02:00:01] ERROR: govulncheck not found. Installing...
+[2026-01-21 02:00:01] ERROR: Failed to install govulncheck

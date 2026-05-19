@@ -1,0 +1,58 @@
+package main
+
+import (
+	"context"
+	"log"
+	"time"
+
+	"github.com/fluxorio/fluxor/pkg/config"
+	"github.com/fluxorio/fluxor/pkg/core"
+	"github.com/fluxorio/fluxor/pkg/entrypoint"
+)
+
+func main() {
+	// Load configuration from application.properties
+	var cfg ServiceConfig
+	if err := config.LoadProperties("application.properties", &cfg); err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Create MainVerticle with config
+	app, err := entrypoint.NewMainVerticle("application.properties")
+	if err != nil {
+		log.Fatalf("Failed to create app: %v", err)
+	}
+
+	// Deploy service verticle
+	_, err = app.DeployVerticle(New{{.ServiceName}}Verticle(&cfg))
+	if err != nil {
+		log.Fatalf("Failed to deploy service verticle: %v", err)
+	}
+
+	// Start application
+	if err := app.Start(); err != nil {
+		log.Fatalf("Failed to start app: %v", err)
+	}
+
+	// Wait for interrupt
+	select {}
+}
+
+// ServiceConfig represents the service configuration loaded from application.properties
+type ServiceConfig struct {
+	Server struct {
+		Addr string `config:"addr"`
+		Port int    `config:"port"`
+	} `config:"server"`
+
+	Eureka struct {
+		RegistryURL string `config:"registry.url"`
+		Enabled     bool   `config:"enabled"`
+	} `config:"eureka"`
+
+	Service struct {
+		Name string `config:"name"`
+		Host string `config:"host"`
+		Port int    `config:"port"`
+	} `config:"service"`
+}

@@ -1,0 +1,94 @@
+2026-01-06 18:31:45 [INFO] fluxor: ============================================================
+2026-01-06 18:31:45 [INFO] fluxor:   Fluxor High-Performance Server
+2026-01-06 18:31:45 [INFO] fluxor: ============================================================
+2026-01-06 18:31:45 [INFO] fluxor: Runtime: Go go1.25.5, GOMAXPROCS=8, NumCPU=8
+2026-01-06 18:31:45 [INFO] fluxor: ============================================================
+2026-01-06 18:31:45 [INFO] fluxor:   High-Performance HTTPS Server
+2026-01-06 18:31:45 [INFO] fluxor:   Target: 50k+ RPS with TLS
+2026-01-06 18:31:45 [INFO] fluxor: ============================================================
+2026-01-06 18:31:56 [INFO] fluxor: Received interrupt, shutting down...
+2026-01-06 18:31:56 [INFO] fluxor: Server shutdown complete
+2026-01-07 19:42:59 [INFO] fluxor: ============================================================
+2026-01-07 19:42:59 [INFO] fluxor:   Fluxor High-Performance Server
+2026-01-07 19:42:59 [INFO] fluxor: ============================================================
+2026-01-07 19:42:59 [INFO] fluxor: Runtime: Go go1.25.5, GOMAXPROCS=8, NumCPU=8
+2026-01-07 19:42:59 [INFO] fluxor: ============================================================
+2026-01-07 19:42:59 [INFO] fluxor:   High-Performance HTTPS Server
+2026-01-07 19:42:59 [INFO] fluxor:   Target: 50k+ RPS with TLS
+2026-01-07 19:42:59 [INFO] fluxor: ============================================================
+2026-01-07 19:42:59 [INFO] fluxor: Using custom configuration from config file
+2026-01-07 19:42:59 [ERROR] fluxor: Failed to deploy verticle: fail-fast: TLS configuration error: fail-fast: cert file not found: certs/gitvn.com.crt
+2026-01-07 19:43:22 [INFO] fluxor: ============================================================
+2026-01-07 19:43:22 [INFO] fluxor:   Fluxor High-Performance Server
+2026-01-07 19:43:22 [INFO] fluxor: ============================================================
+2026-01-07 19:43:22 [INFO] fluxor: Runtime: Go go1.25.5, GOMAXPROCS=8, NumCPU=8
+2026-01-07 19:43:22 [INFO] fluxor: ============================================================
+2026-01-07 19:43:22 [INFO] fluxor:   High-Performance HTTPS Server
+2026-01-07 19:43:22 [INFO] fluxor:   Target: 50k+ RPS with TLS
+2026-01-07 19:43:22 [INFO] fluxor: ============================================================
+2026-01-07 19:43:22 [INFO] fluxor: Using custom configuration from config file
+2026-01-07 19:43:22 [INFO] fluxor: TLS enabled for domain: gitvn.com
+2026-01-07 19:43:22 [INFO] fluxor: Server: :8443 | Mode: custom | Workers: 500 | MaxQueue: 50000 | MaxConns: 100000
+2026-01-07 19:43:32 [INFO] fluxor: [METRICS] uptime=10s reqs=0 rps=0.00 queued=0 rejected=0 ccu=0 util=0.0% goroutines=515
+2026-01-07 19:43:42 [INFO] fluxor: [METRICS] uptime=20s reqs=0 rps=0.00 queued=0 rejected=0 ccu=0 util=0.0% goroutines=515
+2026-01-07 19:43:52 [INFO] fluxor: [METRICS] uptime=30s reqs=0 rps=0.00 queued=0 rejected=0 ccu=0 util=0.0% goroutines=515
+2026-01-07 19:44:02 [INFO] fluxor: [METRICS] uptime=40s reqs=0 rps=0.00 queued=0 rejected=0 ccu=0 util=0.0% goroutines=517
+2026-01-07 19:44:12 [INFO] fluxor: [METRICS] uptime=50s reqs=0 rps=0.00 queued=0 rejected=0 ccu=0 util=0.0% goroutines=517
+2026-01-07 19:44:22 [ERROR] fluxor: Failed to deploy verticle: start timeout after 1m0s for deployment deployment.2adc2ae5-3aba-4ec4-92ea-59fd9534d350: verticle Start() method did not complete within the timeout period. This usually means Start() is blocking on a long-running operation (e.g., network call, file I/O, or server startup). Consider moving blocking operations to background goroutines
+2026-01-07 19:46:10 [INFO] fluxor: ============================================================
+2026-01-07 19:46:10 [INFO] fluxor:   Fluxor High-Performance Server
+2026-01-07 19:46:10 [INFO] fluxor: ============================================================
+2026-01-07 19:46:10 [INFO] fluxor: Runtime: Go go1.25.5, GOMAXPROCS=8, NumCPU=8
+2026-01-07 19:46:10 [INFO] fluxor: ============================================================
+2026-01-07 19:46:10 [INFO] fluxor:   High-Performance HTTPS Server
+2026-01-07 19:46:10 [INFO] fluxor:   Target: 50k+ RPS with TLS
+2026-01-07 19:46:10 [INFO] fluxor: ============================================================
+2026-01-07 19:46:10 [INFO] fluxor: Using custom configuration from config file
+2026-01-07 19:46:10 [INFO] fluxor: TLS enabled for domain: gitvn.com
+2026-01-07 19:46:10 [INFO] fluxor: Server: :8443 | Mode: custom | Workers: 500 | MaxQueue: 50000 | MaxConns: 100000
+2026-01-07 19:46:20 [INFO] fluxor: [METRICS] uptime=10s reqs=0 rps=0.00 queued=0 rejected=0 ccu=0 util=0.0% goroutines=518
+2026-01-07 19:46:30 [INFO] fluxor: [METRICS] uptime=20s reqs=98871 rps=4943.19 queued=0 rejected=0 ccu=92 util=0.2% goroutines=619
+2026-01-07 19:46:40 [INFO] fluxor: [METRICS] uptime=30s reqs=329578 rps=10985.06 queued=0 rejected=0 ccu=0 util=0.0% goroutines=619
+2026-01-07 19:46:50 [INFO] fluxor: [METRICS] uptime=40s reqs=329578 rps=8239.00 queued=0 rejected=0 ccu=0 util=0.0% goroutines=619
+2026-01-07 19:47:00 [INFO] fluxor: [METRICS] uptime=50s reqs=329578 rps=6591.22 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:47:10 [INFO] fluxor: [METRICS] uptime=1m0s reqs=329578 rps=5492.72 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:47:20 [INFO] fluxor: [METRICS] uptime=1m10s reqs=329578 rps=4708.08 queued=0 rejected=0 ccu=0 util=0.0% goroutines=521
+2026-01-07 19:47:30 [INFO] fluxor: [METRICS] uptime=1m20s reqs=329579 rps=4119.60 queued=0 rejected=0 ccu=0 util=0.0% goroutines=521
+2026-01-07 19:47:40 [INFO] fluxor: [METRICS] uptime=1m30s reqs=329579 rps=3661.88 queued=0 rejected=0 ccu=0 util=0.0% goroutines=521
+2026-01-07 19:47:50 [INFO] fluxor: [METRICS] uptime=1m40s reqs=329579 rps=3295.70 queued=0 rejected=0 ccu=0 util=0.0% goroutines=520
+2026-01-07 19:48:00 [INFO] fluxor: [METRICS] uptime=1m50s reqs=329579 rps=2996.10 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:48:10 [INFO] fluxor: [METRICS] uptime=2m0s reqs=329579 rps=2746.43 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:48:20 [INFO] fluxor: [METRICS] uptime=2m10s reqs=329579 rps=2535.17 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:48:30 [INFO] fluxor: [METRICS] uptime=2m20s reqs=329579 rps=2354.11 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:48:40 [INFO] fluxor: [METRICS] uptime=2m30s reqs=329579 rps=2197.16 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:48:50 [INFO] fluxor: [METRICS] uptime=2m40s reqs=329579 rps=2059.84 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:49:00 [INFO] fluxor: [METRICS] uptime=2m50s reqs=329579 rps=1938.67 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:49:10 [INFO] fluxor: [METRICS] uptime=3m0s reqs=329579 rps=1830.97 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:49:20 [INFO] fluxor: [METRICS] uptime=3m10s reqs=329579 rps=1734.60 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:49:30 [INFO] fluxor: [METRICS] uptime=3m20s reqs=329579 rps=1647.87 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:49:40 [INFO] fluxor: [METRICS] uptime=3m30s reqs=329579 rps=1569.41 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:49:50 [INFO] fluxor: [METRICS] uptime=3m40s reqs=329579 rps=1498.07 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:50:00 [INFO] fluxor: [METRICS] uptime=3m50s reqs=329579 rps=1432.94 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:50:10 [INFO] fluxor: [METRICS] uptime=4m0s reqs=329579 rps=1373.23 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:50:20 [INFO] fluxor: [METRICS] uptime=4m10s reqs=329579 rps=1318.30 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:50:30 [INFO] fluxor: [METRICS] uptime=4m20s reqs=329579 rps=1267.60 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:50:40 [INFO] fluxor: [METRICS] uptime=4m30s reqs=329579 rps=1220.65 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:50:50 [INFO] fluxor: [METRICS] uptime=4m40s reqs=498630 rps=1780.81 queued=0 rejected=0 ccu=13 util=0.0% goroutines=619
+2026-01-07 19:51:00 [INFO] fluxor: [METRICS] uptime=4m50s reqs=639781 rps=2206.12 queued=0 rejected=0 ccu=0 util=0.0% goroutines=619
+2026-01-07 19:51:10 [INFO] fluxor: [METRICS] uptime=5m0s reqs=639781 rps=2132.59 queued=0 rejected=0 ccu=0 util=0.0% goroutines=619
+2026-01-07 19:51:20 [INFO] fluxor: [METRICS] uptime=5m10s reqs=639781 rps=2063.79 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:51:30 [INFO] fluxor: [METRICS] uptime=5m20s reqs=639781 rps=1999.30 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:51:40 [INFO] fluxor: [METRICS] uptime=5m30s reqs=639781 rps=1938.72 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:51:50 [INFO] fluxor: [METRICS] uptime=5m40s reqs=639781 rps=1881.69 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:52:00 [INFO] fluxor: [METRICS] uptime=5m50s reqs=639781 rps=1827.93 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:52:10 [INFO] fluxor: [METRICS] uptime=6m0s reqs=639781 rps=1777.16 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:52:20 [INFO] fluxor: [METRICS] uptime=6m10s reqs=639781 rps=1729.13 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:52:30 [INFO] fluxor: [METRICS] uptime=6m20s reqs=639781 rps=1683.62 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:52:40 [INFO] fluxor: [METRICS] uptime=6m30s reqs=639781 rps=1640.45 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:52:50 [INFO] fluxor: [METRICS] uptime=6m40s reqs=639781 rps=1599.44 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:53:00 [INFO] fluxor: [METRICS] uptime=6m50s reqs=639781 rps=1560.43 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:53:10 [INFO] fluxor: [METRICS] uptime=7m0s reqs=639781 rps=1523.28 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:53:20 [INFO] fluxor: [METRICS] uptime=7m10s reqs=639781 rps=1487.85 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:53:30 [INFO] fluxor: [METRICS] uptime=7m20s reqs=639781 rps=1454.04 queued=0 rejected=0 ccu=0 util=0.0% goroutines=519
+2026-01-07 19:53:31 [INFO] fluxor: Received interrupt, shutting down...
+2026-01-07 19:53:31 [INFO] fluxor: Server shutdown complete

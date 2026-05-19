@@ -1,0 +1,26 @@
+server:
+  port: ":8080"
+  max_ccu: 5000
+  utilization_percent: 67
+
+database:
+  host: "localhost"
+  port: 5432
+  database: "fluxor"
+  user: "fluxor"
+  password: "password"
+  max_connections: 100
+  min_connections: 10
+  max_idle_time: 300
+
+auth:
+  jwt_secret: "your-secret-key-change-in-production"
+  allowed_origins:
+    - "http://localhost:3000"
+    - "https://app.example.com"
+
+observability:
+  enable_tracing: true
+  enable_metrics: true
+  jaeger_endpoint: "http://localhost:14268/api/traces"
+  prometheus_port: ":9090"

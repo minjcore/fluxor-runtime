@@ -1,0 +1,137 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/fluxorio/fluxor/pkg/core"
+	"github.com/fluxorio/fluxor/pkg/eureka"
+	"github.com/fluxorio/fluxor/pkg/web"
+)
+
+// {{.ServiceName}}Verticle is the main service verticle
+type {{.ServiceName}}Verticle struct {
+	*core.BaseVerticle
+	config *ServiceConfig
+	server *web.FastHTTPServer
+	client *eureka.Client
+}
+
+// New{{.ServiceName}}Verticle creates a new service verticle
+func New{{.ServiceName}}Verticle(config *ServiceConfig) *{{.ServiceName}}Verticle {
+	return &{{.ServiceName}}Verticle{
+		BaseVerticle: core.NewBaseVerticle("{{.ServiceNameLower}}"),
+		config:       config,
+	}
+}
+
+func (v *{{.ServiceName}}Verticle) Start(ctx core.FluxorContext) error {
+	if err := v.BaseVerticle.Start(ctx); err != nil {
+		return err
+	}
+
+	log.Println("{{.ServiceName}} service starting...")
+
+	// Get server address from config
+	addr := fmt.Sprintf(":%d", v.config.Server.Port)
+	if v.config.Server.Addr != "" {
+		addr = v.config.Server.Addr
+	}
+
+	// Create FastHTTPServer
+	cfg := web.DefaultFastHTTPServerConfig(addr)
+	v.server = web.NewFastHTTPServer(ctx.GoCMD(), cfg)
+
+	// Setup routes
+	router := v.server.FastRouter()
+
+	// Health check endpoint
+	router.GETFast("/health", func(c *web.FastRequestContext) error {
+		return c.JSON(200, map[string]interface{}{
+			"status":  "UP",
+			"service": v.config.Service.Name,
+		})
+	})
+
+	// Example API endpoint
+	router.GETFast("/api/hello", func(c *web.FastRequestContext) error {
+		return c.JSON(200, map[string]interface{}{
+			"message": fmt.Sprintf("Hello from %s!", v.config.Service.Name),
+		})
+	})
+
+	// Register with Eureka if enabled
+	if v.config.Eureka.Enabled {
+		if err := v.registerWithEureka(ctx); err != nil {
+			log.Printf("Warning: Failed to register with Eureka: %v", err)
+		}
+	}
+
+	// Start server
+	go func() {
+		log.Printf("HTTP server starting on %s", addr)
+		if err := v.server.Start(); err != nil {
+			log.Printf("Server error: %v", err)
+		}
+	}()
+
+	log.Println("{{.ServiceName}} service started successfully")
+	return nil
+}
+
+func (v *{{.ServiceName}}Verticle) Stop(ctx core.FluxorContext) error {
+	log.Println("{{.ServiceName}} service stopping...")
+
+	// Unregister from Eureka
+	if v.client != nil {
+		v.client.StopHeartbeat()
+		unregisterCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = v.client.Unregister(unregisterCtx)
+	}
+
+	// Stop HTTP server
+	if v.server != nil {
+		if err := v.server.Stop(); err != nil {
+			log.Printf("Error stopping server: %v", err)
+		}
+	}
+
+	return v.BaseVerticle.Stop(ctx)
+}
+
+func (v *{{.ServiceName}}Verticle) registerWithEureka(ctx core.FluxorContext) error {
+	// Create service instance
+	instance := &eureka.ServiceInstance{
+		ServiceName: v.config.Service.Name,
+		Host:        v.config.Service.Host,
+		Port:        v.config.Service.Port,
+		Status:      eureka.InstanceStatusUp,
+		Metadata: map[string]string{
+			"version": "1.0.0",
+		},
+		HealthCheckURL: fmt.Sprintf("http://%s:%d/health", v.config.Service.Host, v.config.Service.Port),
+	}
+
+	// Create Eureka client
+	clientConfig := eureka.DefaultClientConfig(v.config.Eureka.RegistryURL, instance)
+	v.client = eureka.NewClient(clientConfig)
+
+	// Register
+	registerCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := v.client.Register(registerCtx); err != nil {
+		return fmt.Errorf("failed to register: %w", err)
+	}
+
+	// Start heartbeat
+	if err := v.client.StartHeartbeat(ctx.GoCMD().Context()); err != nil {
+		return fmt.Errorf("failed to start heartbeat: %w", err)
+	}
+
+	log.Printf("Registered with Eureka: %s", v.config.Eureka.RegistryURL)
+	return nil
+}

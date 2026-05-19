@@ -1,0 +1,47 @@
+[2026-01-28 20:40:06] ================================================
+[2026-01-28 20:40:06] Starting vulnerability scan with govulncheck
+[2026-01-28 20:40:06] Script location: /Users/khangdc/fluxor-runtime/cmd/proxy-cache
+[2026-01-28 20:40:06] Root project directory: /Users/khangdc/fluxor-runtime
+[2026-01-28 20:40:06] Working directory: /Users/khangdc/fluxor-runtime
+[2026-01-28 20:40:06] ================================================
+[2026-01-28 20:40:06] Running govulncheck on root project (/Users/khangdc/fluxor-runtime)...
+govulncheck: loading packages: 
+There are errors with the provided package patterns:
+
+apps/load-balancing/main.go:4:2: no required module provides package github.com/fluxorio/fluxor/examples/load-balancing/verticles; to add it:
+	go get github.com/fluxorio/fluxor/examples/load-balancing/verticles
+/Users/khangdc/fluxor-runtime/apps/load-balancing/main.go:4:2: could not import github.com/fluxorio/fluxor/examples/load-balancing/verticles (invalid package name: "")
+apps/load-balancing/verticles/master.go:11:2: no required module provides package github.com/fluxorio/fluxor/examples/load-balancing/contracts; to add it:
+	go get github.com/fluxorio/fluxor/examples/load-balancing/contracts
+/Users/khangdc/fluxor-runtime/apps/load-balancing/verticles/master.go:11:2: could not import github.com/fluxorio/fluxor/examples/load-balancing/contracts (invalid package name: "")
+-: C++ source files not allowed when not using cgo or SWIG: fast_blob_indexer.cpp fast_blob_indexer_extreme.cpp fast_blob_indexer_godlike.cpp fast_blob_indexer_hyper.cpp fast_blob_indexer_ultimate.cpp fast_blob_indexer_ultra.cpp fast_blob_indexer_uring.cpp
+/Users/khangdc/fluxor-runtime/apps/todo-api/handlers/auth_handler.go:47:17: invalid operation: cannot call ctx.GoCMD (variable of interface type core.GoCMD): core.GoCMD is not a function
+/Users/khangdc/fluxor-runtime/apps/todo-api/handlers/auth_handler.go:79:17: invalid operation: cannot call ctx.GoCMD (variable of interface type core.GoCMD): core.GoCMD is not a function
+/Users/khangdc/fluxor-runtime/apps/todo-api/handlers/auth_handler.go:152:17: invalid operation: cannot call ctx.GoCMD (variable of interface type core.GoCMD): core.GoCMD is not a function
+/Users/khangdc/fluxor-runtime/apps/todo-api/handlers/todo_handler.go:60:17: invalid operation: cannot call ctx.GoCMD (variable of interface type core.GoCMD): core.GoCMD is not a function
+/Users/khangdc/fluxor-runtime/apps/todo-api/handlers/todo_handler.go:94:17: invalid operation: cannot call ctx.GoCMD (variable of interface type core.GoCMD): core.GoCMD is not a function
+/Users/khangdc/fluxor-runtime/apps/todo-api/handlers/todo_handler.go:142:21: invalid operation: cannot call ctx.GoCMD (variable of interface type core.GoCMD): core.GoCMD is not a function
+/Users/khangdc/fluxor-runtime/apps/todo-api/handlers/todo_handler.go:184:17: invalid operation: cannot call ctx.GoCMD (variable of interface type core.GoCMD): core.GoCMD is not a function
+/Users/khangdc/fluxor-runtime/apps/todo-api/handlers/todo_handler.go:218:11: invalid operation: cannot call ctx.GoCMD (variable of interface type core.GoCMD): core.GoCMD is not a function
+apps/todo-api/cmd/main.go:13:2: no required module provides package github.com/fluxorio/fluxor/examples/todo-api/pkg/auth; to add it:
+	go get github.com/fluxorio/fluxor/examples/todo-api/pkg/auth
+apps/todo-api/cmd/main.go:14:2: no required module provides package github.com/fluxorio/fluxor/examples/todo-api/pkg/todo; to add it:
+	go get github.com/fluxorio/fluxor/examples/todo-api/pkg/todo
+/Users/khangdc/fluxor-runtime/apps/todo-api/cmd/main.go:13:2: could not import github.com/fluxorio/fluxor/examples/todo-api/pkg/auth (invalid package name: "")
+/Users/khangdc/fluxor-runtime/apps/todo-api/cmd/main.go:14:2: could not import github.com/fluxorio/fluxor/examples/todo-api/pkg/todo (invalid package name: "")
+/Users/khangdc/fluxor-runtime/apps/todo-api/pkg/todo/handler.go:7:2: could not import github.com/fluxorio/fluxor/examples/todo-api/pkg/auth (invalid package name: "")
+/Users/khangdc/fluxor-runtime/load-test/simple_server.go:12:6: main redeclared in this block
+/Users/khangdc/fluxor-runtime/load-test/monitor_profiling.go:22:6: 	other declaration of main
+/Users/khangdc/fluxor-runtime/pkg/hft/hardware/optimization.go:205:17: undefined: runtime.DebugGC
+-: # github.com/go-skynet/go-llama.cpp
+binding.cpp:1:10: fatal error: 'common.h' file not found
+/Users/khangdc/go/pkg/mod/github.com/go-skynet/go-llama.cpp@v0.0.0-20240314183750-6a8041ef6b46/llama.go:9:8: could not import C (no metadata for C)
+/Users/khangdc/fluxor-runtime/pkg/private/llama/examples/llm_verticle_example.go:16:6: main redeclared in this block
+/Users/khangdc/fluxor-runtime/pkg/private/llama/examples/compute_framework_example.go:16:6: 	other declaration of main
+/Users/khangdc/fluxor-runtime/pkg/private/llama/examples/quick_demo.go:15:6: main redeclared in this block
+/Users/khangdc/fluxor-runtime/pkg/private/llama/examples/compute_framework_example.go:16:6: 	other declaration of main
+
+For details on package patterns, see https://pkg.go.dev/cmd/go#hdr-Package_lists_and_patterns.
+
+[2026-01-28 20:40:25] ERROR: Vulnerability scan found issues (exit code: 1)
+[2026-01-28 20:40:25] ERROR: Check /Users/khangdc/fluxor-runtime/cmd/proxy-cache/logs/vulnscan-20260128-204006.log for details

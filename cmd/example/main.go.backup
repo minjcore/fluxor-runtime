@@ -1,0 +1,415 @@
+// Copyright (c) 2024-2026 Fluxor Framework
+// All rights reserved.
+//
+// This source code is proprietary and confidential.
+// Unauthorized copying, modification, distribution, or use of this software,
+// via any medium is strictly prohibited without the express written permission
+// of Fluxor Framework.
+//
+// This code is provided as an example for demonstration purposes only.
+// Redistribution or sharing of this source code is not permitted.
+//
+// License: Proprietary - All Rights Reserved
+// For licensing inquiries, please contact: caokhang91@gmail.com
+
+// Package main demonstrates BaseVerticle pattern - Enterprise & AI-Friendly
+//
+// 🎯 PATTERN: BaseVerticle - Struct-based, enterprise pattern (Java-style abstract base class)
+// 💡 BEST FOR: Production applications, complex systems, enterprise development
+// 🤖 AI-FRIENDLY: Clear struct patterns, lifecycle management, well-documented
+//
+// Key Features:
+//   - Struct-based verticles (embed *core.BaseVerticle)
+//   - Lifecycle management (Start/Stop methods)
+//   - Automatic resource cleanup
+//   - Better for complex applications
+//
+// Pattern Comparison:
+//   - This file (BaseVerticle): Struct-based, enterprise pattern, better for production
+//   - main.go (Sugar Dev): Function-based, simpler, faster to write
+//
+// What This Example Demonstrates:
+//   1. BaseVerticle pattern (embed *core.BaseVerticle)
+//   2. EventBus publish/subscribe
+//   3. HTTP server with routes
+//   4. Non-blocking server startup (ExecuteOn pattern)
+//   5. Graceful shutdown (automatic via MainVerticle)
+//   6. Scaling (multiple verticle instances)
+package main
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/fluxorio/fluxor/pkg/core"
+	"github.com/fluxorio/fluxor/pkg/entrypoint"
+	"github.com/fluxorio/fluxor/pkg/web"
+)
+
+// PingVerticle publishes ping messages to EventBus
+//
+// 🎯 Purpose: Demonstrates BaseVerticle pattern with EventBus publish
+// 💡 Why BaseVerticle: Enterprise pattern with lifecycle management, better for production
+// 🤖 AI-Friendly: Clear struct pattern, embedded BaseVerticle, easy to understand
+//
+// Pattern: BaseVerticle (Java-style abstract base class)
+//   - Embed *core.BaseVerticle for lifecycle management
+//   - Override Start() and Stop() methods
+//   - Use BaseVerticle convenience methods (Publish, Consumer, etc.)
+type PingVerticle struct {
+	*core.BaseVerticle // Embed base verticle - provides EventBus, lifecycle, etc.
+}
+
+// NewPingVerticle creates a new ping verticle
+// 💡 Factory pattern - ensures proper initialization
+func NewPingVerticle() *PingVerticle {
+	return &PingVerticle{
+		BaseVerticle: core.NewBaseVerticle("ping-verticle"),
+	}
+}
+
+// Start implements Verticle.Start - must be non-blocking
+//
+// 💡 CRITICAL: Start() must return quickly (< 20µs) - never block here!
+// 🤖 AI Note: All blocking work must be offloaded to goroutines or WorkerPool
+//
+// Pattern:
+//   1. Always call BaseVerticle.Start() first (initializes EventBus, event loop, etc.)
+//   2. Setup your verticle (register consumers, start background tasks, etc.)
+//   3. Return nil immediately (non-blocking)
+func (v *PingVerticle) Start(ctx core.FluxorContext) error {
+	// Always call BaseVerticle.Start first - this initializes:
+	//   - EventBus reference (v.eventBus)
+	//   - GoCMD reference (v.gocmd)
+	//   - Event loop for this verticle
+	//   - Worker pool for blocking work
+	if err := v.BaseVerticle.Start(ctx); err != nil {
+		return err
+	}
+
+	logger := core.NewDefaultLogger()
+	logger.Info("PingVerticle started")
+
+	// Start background goroutine for periodic pings
+	// 💡 Why goroutine? This is I/O-bound async work (EventBus publish)
+	//    In BaseVerticle pattern, we could also use v.ExecuteOn() for better encapsulation
+	// 🤖 AI Note: This pattern ensures Start() returns immediately (non-blocking)
+	go func() {
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Context().Done():
+				// Graceful shutdown: stop when context is cancelled
+				logger.Info("PingVerticle: context cancelled, stopping ping loop")
+				return
+			case <-ticker.C:
+				// Publish ping message to EventBus every 2 seconds
+				// 💡 v.Publish() is a BaseVerticle convenience method
+				//    It's equivalent to: v.eventBus.Publish("ping-topic", msg)
+				msg := fmt.Sprintf("PING at %s", time.Now().Format(time.RFC3339))
+				if err := v.Publish("ping-topic", msg); err != nil {
+					logger.Error(fmt.Sprintf("PingVerticle: failed to publish ping: %v", err))
+				} else {
+					logger.Info(fmt.Sprintf("PingVerticle: published %s", msg))
+				}
+			}
+		}
+	}()
+
+	return nil // ← Very important: return quickly!
+}
+
+// Stop implements Verticle.Stop - cleanup resources
+//
+// 💡 Pattern: Always call BaseVerticle.Stop() last (it handles EventBus cleanup, etc.)
+// 🤖 AI Note: Stop() is called during graceful shutdown - cleanup your resources here
+func (v *PingVerticle) Stop(ctx core.FluxorContext) error {
+	logger := core.NewDefaultLogger()
+	logger.Info("PingVerticle stopping")
+	// BaseVerticle.Stop() handles:
+	//   - Unregistering all consumers
+	//   - Shutting down event loop
+	//   - Shutting down worker pool
+	return v.BaseVerticle.Stop(ctx)
+}
+
+// PongVerticle subscribes to ping messages and logs them
+//
+// 🎯 Purpose: Demonstrates BaseVerticle pattern with EventBus consumer/subscribe
+// 💡 Why BaseVerticle: Enterprise pattern with automatic consumer lifecycle management
+// 🤖 AI-Friendly: Clear consumer pattern, reactive message handling
+//
+// Pattern: EventBus consumer with handler
+//   - Use v.Consumer() to subscribe to topics
+//   - Handler runs on EventBus executor (concurrent, not blocking reactor)
+//   - BaseVerticle automatically unregisters consumer on Stop()
+type PongVerticle struct {
+	*core.BaseVerticle // Embed base verticle for EventBus access
+}
+
+// NewPongVerticle creates a new pong verticle
+func NewPongVerticle() *PongVerticle {
+	return &PongVerticle{
+		BaseVerticle: core.NewBaseVerticle("pong-verticle"),
+	}
+}
+
+// Start implements Verticle.Start - must be non-blocking
+func (v *PongVerticle) Start(ctx core.FluxorContext) error {
+	// Always call BaseVerticle.Start first
+	if err := v.BaseVerticle.Start(ctx); err != nil {
+		return err
+	}
+
+	logger := core.NewDefaultLogger()
+	logger.Info("PongVerticle started")
+
+	// Subscribe to ping-topic using BaseVerticle convenience method
+	// 💡 v.Consumer() is a BaseVerticle convenience method
+	//    It's equivalent to: v.eventBus.Consumer("ping-topic")
+	// 🤖 AI Note: BaseVerticle automatically tracks consumers for cleanup on Stop()
+	consumer := v.Consumer("ping-topic")
+	
+	// Register handler - this is reactive programming!
+	// 💡 Handler runs on EventBus executor (concurrent, not blocking reactor)
+	//    Handler receives FluxorContext and Message
+	//    Return nil = success, return error = signal failure
+	consumer.Handler(func(ctx core.FluxorContext, msg core.Message) error {
+		payload := msg.Body()
+		logger.Info(fmt.Sprintf("PongVerticle: received ping - %v", payload))
+		return nil // Success
+	})
+
+	return nil // ← Return quickly - handler registration is non-blocking
+}
+
+// Stop implements Verticle.Stop - cleanup resources
+func (v *PongVerticle) Stop(ctx core.FluxorContext) error {
+	logger := core.NewDefaultLogger()
+	logger.Info("PongVerticle stopping")
+	return v.BaseVerticle.Stop(ctx)
+}
+
+// HTTPExampleVerticle demonstrates HTTP server with FastHTTPServer
+//
+// 🎯 Purpose: Demonstrates BaseVerticle pattern with HTTP server integration
+// 💡 Why BaseVerticle: Enterprise pattern with proper lifecycle management
+// 🤖 AI-Friendly: Clear HTTP server setup, route registration, lifecycle handling
+//
+// Pattern: HTTP server in verticle
+//   - Store server reference for Stop() cleanup
+//   - Use ExecuteOn() for non-blocking server startup
+//   - Register routes before starting server
+type HTTPExampleVerticle struct {
+	*core.BaseVerticle
+	server *web.FastHTTPServer // Store reference for Stop() cleanup
+	router *web.FastRouter     // Store reference (optional, for future use)
+}
+
+// NewHTTPExampleVerticle creates a new HTTP example verticle
+func NewHTTPExampleVerticle() *HTTPExampleVerticle {
+	return &HTTPExampleVerticle{
+		BaseVerticle: core.NewBaseVerticle("http-example-verticle"),
+	}
+}
+
+// Start implements Verticle.Start - must be non-blocking
+func (v *HTTPExampleVerticle) Start(ctx core.FluxorContext) error {
+	// Always call BaseVerticle.Start first
+	if err := v.BaseVerticle.Start(ctx); err != nil {
+		return err
+	}
+
+	logger := core.NewDefaultLogger()
+	logger.Info("HTTPExampleVerticle starting")
+
+	gocmd := ctx.GoCMD()
+
+	// Create HTTP server config
+	cfg := web.DefaultFastHTTPServerConfig(":8080")
+	server := web.NewFastHTTPServer(gocmd, cfg)
+	router := server.FastRouter()
+
+	// Register routes
+	router.GETFast("/", func(c *web.FastRequestContext) error {
+		return c.JSON(200, map[string]interface{}{
+			"message": "Hello from Fluxor Example!",
+			"version": "1.0.0",
+		})
+	})
+
+	router.GETFast("/api/ping", func(c *web.FastRequestContext) error {
+		return c.JSON(200, map[string]interface{}{
+			"status": "ok",
+			"time":   time.Now().Unix(),
+		})
+	})
+
+	router.GETFast("/api/eventbus/publish", func(c *web.FastRequestContext) error {
+		// Publish message to EventBus from HTTP handler
+		msg := fmt.Sprintf("HTTP triggered message at %s", time.Now().Format(time.RFC3339))
+		if err := v.Publish("ping-topic", msg); err != nil {
+			return c.JSON(500, map[string]interface{}{
+				"error": fmt.Sprintf("Failed to publish: %v", err),
+			})
+		}
+		return c.JSON(200, map[string]interface{}{
+			"message": "Published to EventBus",
+			"payload": msg,
+		})
+	})
+
+	router.GETFast("/api/info", func(c *web.FastRequestContext) error {
+		// Return system information
+		return c.JSON(200, map[string]interface{}{
+			"message": "Fluxor Example Application",
+			"features": []string{
+				"BaseVerticle Pattern",
+				"EventBus Publish/Subscribe",
+				"HTTP Server",
+				"Non-blocking Start",
+				"Graceful Shutdown",
+			},
+			"timestamp": time.Now().Unix(),
+		})
+	})
+
+	v.server = server
+	v.router = router
+
+	// GOOD: Offload blocking / I/O-bound work (server.Start() is blocking!)
+	// to a goroutine using ExecuteOn()
+	//
+	// 💡 Why ExecuteOn()? This is the Fluxor pattern for I/O-bound async operations
+	//    - Hides goroutine creation (better encapsulation than plain go func())
+	//    - Better lifecycle management through BaseVerticle
+	//    - Consistent with Fluxor's event-driven architecture
+	//
+	// 🤖 AI Note: ExecuteOn() vs SubmitBlocking()
+	//    - ExecuteOn(): For I/O-bound async work (HTTP server, background tasks)
+	//    - SubmitBlocking(): For CPU-bound work that needs WorkerPool management
+	//
+	// Pattern: ExecuteOn() for I/O-bound, SubmitBlocking() for CPU-bound
+	v.ExecuteOn(func() {
+		// This lambda runs in a goroutine (not event-loop, not WorkerPool)
+		// ExecuteOn() is for I/O-bound async operations like HTTP server startup
+		logger.Info("HTTP server starting on :8080")
+		if err := server.Start(); err != nil {
+			logger.Error(fmt.Sprintf("HTTP server error: %v", err))
+			// Optional: you could send failure to event bus / ctx here
+			// ctx.Fail(err) ← only if you really want to mark verticle deployment as failed
+		}
+		// Success case: usually nothing special needed
+		// 💡 Server runs until context is cancelled (graceful shutdown)
+	})
+
+	logger.Info("HTTPExampleVerticle started successfully")
+	logger.Info("Available endpoints:")
+	logger.Info("  GET / - Hello message")
+	logger.Info("  GET /api/ping - Health check")
+	logger.Info("  GET /api/eventbus/publish - Publish to EventBus")
+	logger.Info("  GET /api/info - System information")
+
+	return nil
+}
+
+// Stop implements Verticle.Stop - cleanup resources
+func (v *HTTPExampleVerticle) Stop(ctx core.FluxorContext) error {
+	logger := core.NewDefaultLogger()
+	logger.Info("HTTPExampleVerticle stopping")
+
+	if v.server != nil {
+		if err := v.server.Stop(); err != nil {
+			logger.Error(fmt.Sprintf("Error stopping HTTP server: %v", err))
+			return err
+		}
+	}
+
+	return v.BaseVerticle.Stop(ctx)
+}
+
+// Main function - demonstrates MainVerticle pattern
+//
+// 🎯 Purpose: Entry point demonstrating BaseVerticle pattern (enterprise, structured)
+// 💡 Why MainVerticle: Handles graceful shutdown, signal handling, deployment lifecycle
+// 🤖 AI-Friendly: Clear deployment pattern, easy to understand flow
+//
+// Pattern Comparison:
+//   - MainVerticle (this file): Struct-based, enterprise pattern, better for production
+//   - Sugar Dev (fx): Function-based, Express.js-like, perfect for rapid prototyping
+//
+// This example shows:
+//   1. Verticle deployment pattern
+//   2. EventBus publish/subscribe
+//   3. HTTP server with routes
+//   4. Scaling (multiple pong verticle instances)
+//   5. Graceful shutdown (automatic via MainVerticle)
+func main() {
+	logger := core.NewDefaultLogger()
+	logger.Info("Starting Fluxor Example Application")
+	logger.Info("🤖 Code is optimized for both developers and AI assistants")
+
+	// Create MainVerticle (handles graceful shutdown, signal handling, etc.)
+	// 💡 MainVerticle provides:
+	//    - EventBus instance
+	//    - GoCMD (context management)
+	//    - Deployment lifecycle management
+	//    - Automatic graceful shutdown on SIGINT/SIGTERM
+	// 🤖 AI Note: Empty config path means no config file (use defaults)
+	app, err := entrypoint.NewMainVerticle("")
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to create MainVerticle: %v", err))
+		panic(err)
+	}
+
+	// Deploy PingVerticle - publishes ping messages
+	// 💡 DeployVerticle() returns deployment ID (can be used to undeploy later)
+	_, err = app.DeployVerticle(NewPingVerticle())
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to deploy PingVerticle: %v", err))
+		panic(err)
+	}
+
+	// Deploy PongVerticle - subscribes to ping messages
+	// 💡 Can deploy multiple instances for scaling (load distribution)
+	// 🤖 AI Note: Each instance receives the same messages (broadcast pattern)
+	_, err = app.DeployVerticle(NewPongVerticle())
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to deploy PongVerticle: %v", err))
+		panic(err)
+	}
+
+	// Deploy another PongVerticle instance (demonstrates scaling)
+	// 💡 Multiple instances = horizontal scaling
+	//    Both instances will receive ping messages (EventBus broadcast)
+	_, err = app.DeployVerticle(NewPongVerticle())
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to deploy second PongVerticle: %v", err))
+		panic(err)
+	}
+
+	// Deploy HTTPExampleVerticle - HTTP server with EventBus integration
+	// 💡 HTTP server can also publish to EventBus (see /api/eventbus/publish route)
+	_, err = app.DeployVerticle(NewHTTPExampleVerticle())
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to deploy HTTPExampleVerticle: %v", err))
+		panic(err)
+	}
+
+	// Start application (blocks until SIGINT/SIGTERM)
+	// 💡 MainVerticle handles graceful shutdown automatically
+	//    - Listens for SIGINT (Ctrl+C) or SIGTERM (k8s termination)
+	//    - Calls Stop() on all verticles
+	//    - Waits for cleanup to complete
+	logger.Info("All verticles deployed, starting application...")
+	logger.Info("📖 Try: curl http://localhost:8080/api/info")
+	logger.Info("🛑 Press Ctrl+C to stop")
+	if err := app.Start(); err != nil {
+		logger.Error(fmt.Sprintf("Failed to start application: %v", err))
+		panic(err)
+	}
+	// 💡 app.Start() blocks here until shutdown signal
+	//    After shutdown, MainVerticle automatically stops all verticles
+}

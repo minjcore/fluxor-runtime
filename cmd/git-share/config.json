@@ -1,0 +1,16 @@
+{
+  "server": {
+    "addr": ":8088",
+    "workers": 64,
+    "maxQueue": 4096,
+    "readTimeoutSec": 10,
+    "writeTimeoutSec": 10,
+    "maxConns": 10000,
+    "readBufferSize": 8192,
+    "writeBufferSize": 8192
+  },
+  "tls": {"enabled": false},
+  "metrics": {"enabled": true, "intervalSec": 10},
+  "service": {"name": "gitshare", "version": "1.0.0"},
+  "github": {"token": "${GITHUB_TOKEN}", "baseURL": "https://api.github.com", "userAgent": "playfluxor-gitshare"}
+}

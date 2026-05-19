@@ -1,0 +1,94 @@
+# {{.ServiceName}} - Fluxor Service
+
+A Fluxor service with Eureka service registry integration.
+
+## Configuration
+
+Edit `application.properties` to configure your service:
+
+```properties
+# Server Configuration
+server.addr=:8080
+server.port=8080
+
+# Service Configuration
+service.name={{.ServiceName}}
+service.host=localhost
+service.port=8080
+
+# Eureka Service Registry Configuration
+eureka.enabled=true
+eureka.registry.url=http://localhost:8761
+```
+
+## Getting Started
+
+1. **Install dependencies:**
+   ```bash
+   go mod tidy
+   ```
+
+2. **Start Eureka registry server** (if using Eureka):
+   ```bash
+   # In another terminal, start the Eureka server
+   # See pkg/eureka/README.md for instructions
+   ```
+
+3. **Run the service:**
+   ```bash
+   go run .
+   ```
+
+4. **Test the endpoints:**
+   ```bash
+   curl http://localhost:8080/health
+   curl http://localhost:8080/api/hello
+   ```
+
+## Project Structure
+
+```
+{{.ServiceName}}/
+├── main.go                    # Application entry point
+├── verticle.go                # Service verticle implementation
+├── application.properties     # Configuration file
+├── go.mod                     # Go module file
+└── README.md                  # This file
+```
+
+## Features
+
+- ✅ **Properties-based Configuration**: Uses `application.properties` for configuration
+- ✅ **Eureka Integration**: Automatic service registration and discovery
+- ✅ **Health Checks**: Built-in health check endpoint
+- ✅ **HTTP Server**: FastHTTP server with routing
+- ✅ **Graceful Shutdown**: Proper cleanup on shutdown
+
+## Eureka Service Registry
+
+This service automatically registers with Eureka when `eureka.enabled=true`.
+
+### Service Discovery
+
+To discover other services, use the Eureka client:
+
+```go
+import "github.com/fluxorio/fluxor/pkg/eureka"
+
+client := eureka.NewClient(eureka.DefaultClientConfig("http://localhost:8761", instance))
+instances, err := client.Discover(ctx, "other-service")
+```
+
+## Next Steps
+
+- Add more API endpoints in `verticle.go`
+- Configure database connections
+- Add authentication/authorization middleware
+- Add logging and metrics
+- Create additional verticles for different concerns
+
+## Resources
+
+- [Fluxor Documentation](https://github.com/fluxorio/fluxor)
+- [Eureka Service Registry](../pkg/eureka/README.md)
+- [Configuration Guide](../pkg/config/README.md)

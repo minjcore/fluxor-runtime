@@ -1,0 +1,112 @@
+// Sugar Dev Demo - Express.js-like syntax with Fluxor
+// Much simpler than Verticle pattern!
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"reflect"
+	"syscall"
+	"time"
+
+	"github.com/fluxorio/fluxor/pkg/core"
+	"github.com/fluxorio/fluxor/pkg/fx"
+	"github.com/fluxorio/fluxor/pkg/web"
+)
+
+// Global logger - like morgan in Express.js
+var log *core.MultiLogger
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Setup logger (console + file) - like morgan('combined')
+	consoleLog := core.NewHybridLogger("sugardev", false)
+	fileLog, _ := core.NewFileAppendLogger(core.FileLoggerConfig{
+		Service:  "sugardev",
+		FilePath: "sugardev.log",
+	})
+	defer fileLog.Close()
+	log = core.NewMultiLogger(consoleLog, fileLog)
+
+	// Create app - Express.js style!
+	app, err := fx.New(ctx,
+		fx.Invoke(fx.NewInvoker(setupRoutes)),
+	)
+	if err != nil {
+		log.Error(fmt.Sprintf("Failed to create app: %v", err))
+		os.Exit(1)
+	}
+
+	// Start app
+	if err := app.Start(); err != nil {
+		log.Error(fmt.Sprintf("Failed to start: %v", err))
+		os.Exit(1)
+	}
+
+	log.Info("🍬 Sugar Dev server running on :8080")
+	log.Info("   Press Ctrl+C to stop")
+
+	// Wait for shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	log.Info("👋 Shutting down...")
+	app.Stop()
+}
+
+// setupRoutes - Just like Express.js!
+func setupRoutes(deps map[reflect.Type]interface{}) error {
+	// Get GoCMD from deps
+	gocmd := deps[reflect.TypeOf((*core.GoCMD)(nil)).Elem()].(core.GoCMD)
+
+	// Create server
+	cfg := web.DefaultFastHTTPServerConfig(":8080")
+	server := web.NewFastHTTPServer(gocmd, cfg)
+	router := server.FastRouter()
+
+	// Morgan-style request logging middleware
+	morgan := func(handler func(*web.FastRequestContext) error) func(*web.FastRequestContext) error {
+		return func(c *web.FastRequestContext) error {
+			start := time.Now()
+			err := handler(c)
+			duration := time.Since(start)
+			
+			// Morgan 'dev' format: METHOD /path STATUS duration
+			log.Info(fmt.Sprintf("%s %s %d %v",
+				string(c.RequestCtx.Method()),
+				string(c.RequestCtx.Path()),
+				c.RequestCtx.Response.StatusCode(),
+				duration.Round(time.Microsecond),
+			))
+			return err
+		}
+	}
+
+	// Routes - Express.js style with morgan logging!
+	router.GETFast("/", morgan(func(c *web.FastRequestContext) error {
+		return c.JSON(200, fx.JSON{
+			"message": "Hello from Sugar Dev! 🍬",
+			"pattern": "Express.js-like",
+		})
+	}))
+
+	router.GETFast("/ping", morgan(func(c *web.FastRequestContext) error {
+		return c.JSON(200, fx.JSON{"pong": true})
+	}))
+
+	router.GETFast("/health", morgan(func(c *web.FastRequestContext) error {
+		return c.JSON(200, fx.JSON{
+			"status":  "healthy",
+			"uptime":  "running",
+		})
+	}))
+
+	// Start server in background
+	go server.Start()
+	return nil
+}

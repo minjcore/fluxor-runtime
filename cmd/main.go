@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/fluxorio/fluxor/pkg/core"
+	"github.com/fluxorio/fluxor/pkg/core/eventloop"
 	"github.com/fluxorio/fluxor/pkg/entrypoint"
 	"github.com/fluxorio/fluxor/pkg/fx"
 	"github.com/fluxorio/fluxor/pkg/observability/prometheus"
@@ -114,6 +115,35 @@ func setupApplication(deps map[reflect.Type]interface{}) error {
 
 	// Prometheus metrics endpoint — serves from custom registry (includes fluxor_* + go_* metrics)
 	router.GETFast("/metrics", prometheus.FastHTTPHandler())
+
+	// EventLoopGroup — 2 loops, metrics enabled, visible in Grafana EventLoop panels
+	appCtx := gocmd.Context()
+	loopGroup, loopErr := eventloop.NewEventLoopGroup(appCtx, eventloop.EventLoopConfig{
+		NumLoops:     2,
+		QueueSize:    1024,
+		Metrics:      true,
+		Backpressure: eventloop.BackpressureDrop,
+	})
+	if loopErr != nil {
+		log.Printf("EventLoopGroup init error: %v", loopErr)
+	} else {
+		eventloop.RegisterMetrics(prometheus.DefaultRegisterer, loopGroup)
+		go func() {
+			ticker := time.NewTicker(100 * time.Millisecond)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ticker.C:
+					_ = loopGroup.Dispatch(appCtx, &eventloop.Event{
+						Handler: func(c context.Context, e *eventloop.Event) error { return nil },
+					})
+				case <-appCtx.Done():
+					loopGroup.Close()
+					return
+				}
+			}
+		}()
+	}
 
 	// Start metrics updater
 	go func() {

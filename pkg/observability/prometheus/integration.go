@@ -1,10 +1,13 @@
 package prometheus
 
 import (
+	"sync/atomic"
 	"time"
 
 	"github.com/fluxorio/fluxor/pkg/web"
 )
+
+var lastRejectedRequests int64
 
 // FastHTTPMetricsMiddleware creates middleware that records HTTP metrics
 func FastHTTPMetricsMiddleware() web.FastMiddleware {
@@ -45,9 +48,16 @@ func UpdateServerMetrics(server *web.FastHTTPServer) {
 	metrics := GetMetrics()
 	serverMetrics := server.Metrics()
 
+	current := serverMetrics.RejectedRequests
+	prev := atomic.SwapInt64(&lastRejectedRequests, current)
+	delta := current - prev
+	if delta < 0 {
+		delta = 0
+	}
+
 	metrics.UpdateServerMetrics(
 		serverMetrics.QueuedRequests,
-		0, // Rejected requests are already counted
+		delta,
 		serverMetrics.CurrentCCU,
 		serverMetrics.NormalCCU,
 		serverMetrics.CCUUtilization,

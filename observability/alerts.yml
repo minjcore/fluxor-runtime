@@ -22,6 +22,15 @@ groups:
           summary: "Error rate above 1%"
           description: "5xx error rate is {{ $value | humanizePercentage }} over 2m"
 
+      - alert: BackpressureRejections
+        expr: increase(fluxor_server_rejected_requests_total[1m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backpressure 503s detected"
+          description: "{{ $value | humanize }} requests rejected (503) in the last minute — server at capacity"
+
       - alert: HighLatencyP99
         expr: |
           histogram_quantile(0.99,

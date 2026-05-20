@@ -29,8 +29,6 @@ import (
 	"github.com/fluxorio/fluxor/pkg/fx"
 	"github.com/fluxorio/fluxor/pkg/observability/prometheus"
 	"github.com/fluxorio/fluxor/pkg/web"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
 func main() {
@@ -114,12 +112,8 @@ func setupApplication(deps map[reflect.Type]interface{}) error {
 	// Add metrics middleware to router
 	router.UseFast(prometheus.FastHTTPMetricsMiddleware())
 
-	// Prometheus metrics endpoint
-	metricsHandler := fasthttpadaptor.NewFastHTTPHandler(promhttp.Handler())
-	router.GETFast("/metrics", func(ctx *web.FastRequestContext) error {
-		metricsHandler(ctx.RequestCtx)
-		return nil
-	})
+	// Prometheus metrics endpoint — serves from custom registry (includes fluxor_* + go_* metrics)
+	router.GETFast("/metrics", prometheus.FastHTTPHandler())
 
 	// Start metrics updater
 	go func() {

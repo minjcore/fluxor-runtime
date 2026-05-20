@@ -5,9 +5,17 @@ import (
 
 	"github.com/fluxorio/fluxor/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
+
+func init() {
+	DefaultRegistry.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
+}
 
 // RegisterMetricsEndpoint registers the /metrics endpoint on the FastRouter
 // This allows Prometheus to scrape metrics from the application

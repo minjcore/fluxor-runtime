@@ -1,0 +1,35 @@
+groups:
+  - name: fluxor
+    interval: 15s
+    rules:
+      - alert: HTTPErrorRequests
+        expr: increase(fluxor_http_requests_total{status="5xx"}[1m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx errors detected"
+          description: "{{ $value | humanize }} 5xx responses in the last minute (loop {{ $labels.path }})"
+
+      - alert: HighErrorRate
+        expr: |
+          rate(fluxor_http_requests_total{status="5xx"}[2m])
+          / rate(fluxor_http_requests_total[2m]) > 0.01
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Error rate above 1%"
+          description: "5xx error rate is {{ $value | humanizePercentage }} over 2m"
+
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            rate(fluxor_http_request_duration_seconds_bucket[1m])
+          ) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p99 latency above 1s"
+          description: "p99 request latency is {{ $value | humanizeDuration }}"

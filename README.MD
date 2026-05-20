@@ -118,15 +118,28 @@ Full Prometheus + Grafana stack included.
 
 ## Benchmarks
 
-Load tested with `wrk` on VPS (single node):
+### Peak throughput (dedicated hardware, external client)
+
+| Protocol | RPS |
+|----------|-----|
+| HTTP/1.1 plaintext | **~150,000 req/s** |
+| HTTPS (TLS) | **~80–90,000 req/s** |
+
+Powered by [fasthttp](https://github.com/valyala/fasthttp) with `Concurrency: 200,000` and zero-allocation request handling.
+
+### Load test on VPS (wrk, loopback, single node)
 
 | Endpoint | Connections | RPS | p50 | p99 |
 |----------|-------------|-----|-----|-----|
-| `GET /api/status` | 1,000 | **6,756 req/s** | 152ms | 285ms |
-| `POST /api/echo` | 1,000 | **11,903 req/s** | 82ms | 160ms |
-| `GET /api/status` | 5,000 | **11,531 req/s** | 407ms | 1s (backpressure) |
+| `GET /api/status` | 1,000 | 6,756 req/s | 152ms | 285ms |
+| `POST /api/echo` | 1,000 | 11,903 req/s | 82ms | 160ms |
+| `GET /api/status` | 5,000 | 11,531 req/s | 407ms | 1s (backpressure) |
 
-At 5,000 connections the backpressure system kicks in — excess requests receive `503` immediately (fail-fast), keeping the server stable rather than degrading.
+> VPS numbers are bottlenecked by shared CPU and loopback overhead — not representative of raw throughput.
+
+### Backpressure behavior
+
+At 5,000 connections the CCU limit is breached — excess requests receive `503` immediately (fail-fast). The server stays stable and continues serving normal-capacity requests at full speed rather than degrading under overload.
 
 ---
 

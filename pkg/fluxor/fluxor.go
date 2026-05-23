@@ -149,3 +149,4 @@ func (c *fluxorContextWrapper) Deploy(verticle core.Verticle) (string, error) {
 func (c *fluxorContextWrapper) Undeploy(deploymentID string) error {
 	return c.gocmd.UndeployVerticle(deploymentID)
 }
+func (c *fluxorContextWrapper) DeploymentID() string { return "" }

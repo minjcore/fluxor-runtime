@@ -6,15 +6,13 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
-
-	"github.com/fluxorio/fluxor/pkg/hft/protocol"
 )
 
 // EventLoop represents a single event loop running on one goroutine.
 // The internal queue is a lock-free LMAX Disruptor RingBuffer.
 type EventLoop struct {
 	id         int
-	ringBuffer *protocol.RingBuffer
+	ringBuffer *RingBuffer
 	ctx        context.Context
 	cancel     context.CancelFunc
 	config     EventLoopConfig
@@ -52,7 +50,7 @@ func NewEventLoop(id int, parentCtx context.Context, config EventLoopConfig) *Ev
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	size := nextPow2(config.QueueSize)
-	rb := protocol.NewRingBuffer(size, protocol.YieldWait)
+	rb := NewRingBuffer(size, YieldWait)
 
 	loop := &EventLoop{
 		id:         id,

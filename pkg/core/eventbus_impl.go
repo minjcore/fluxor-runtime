@@ -84,10 +84,11 @@ func NewEventBusWithConfig(ctx context.Context, gocmd GoCMD, config EventBusConf
 	logger := NewDefaultLogger()
 
 	// Create Executor for message processing
-	// Default config: 10 workers, 1000 queue size
+	// 256 workers: each permanent consumer occupies one worker indefinitely;
+	// 10 was too few once several verticles + SSE connections coexist.
 	executorConfig := concurrency.DefaultExecutorConfig()
-	executorConfig.Workers = 10
-	executorConfig.QueueSize = 1000
+	executorConfig.Workers = 256
+	executorConfig.QueueSize = 4096
 	executor := concurrency.NewExecutor(ctx, executorConfig)
 
 	eb := &eventBus{

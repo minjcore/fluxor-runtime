@@ -122,8 +122,8 @@ Full Prometheus + Grafana stack included.
 
 | Protocol | RPS |
 |----------|-----|
-| HTTP/1.1 plaintext | **~150,000 req/s** |
-| HTTPS (TLS) | **~80–90,000 req/s** |
+| HTTP/1.1 plaintext | **~85,000 req/s** |
+| HTTPS (TLS) | **~70,000 req/s** |
 
 Powered by [fasthttp](https://github.com/valyala/fasthttp) with `Concurrency: 200,000` and zero-allocation request handling.
 

@@ -21,6 +21,10 @@ type Config struct {
 
 	// HealthCheck interval for background ping + reconnect. 0 = disabled.
 	HealthCheck time.Duration
+
+	// CircuitBreaker enables the circuit breaker on the health-check loop.
+	// nil = disabled.
+	CircuitBreaker *CircuitConfig
 }
 
 func (c *Config) setDefaults() {
@@ -58,9 +62,10 @@ func (c Config) validate() error {
 // All standard database/sql methods are available via embedding.
 type DB struct {
 	*sql.DB
-	cfg    Config
-	stop   chan struct{}
-	once   sync.Once
+	cfg     Config
+	circuit *Circuit
+	stop    chan struct{}
+	once    sync.Once
 }
 
 // Open opens a database, validates config, pings, and starts the health-check loop.
@@ -87,6 +92,9 @@ func Open(cfg Config) (*DB, error) {
 	}
 
 	d := &DB{DB: sqlDB, cfg: cfg, stop: make(chan struct{})}
+	if cfg.CircuitBreaker != nil {
+		d.circuit = NewCircuit(*cfg.CircuitBreaker)
+	}
 	if cfg.HealthCheck > 0 {
 		go d.healthLoop()
 	}
@@ -109,11 +117,30 @@ func (d *DB) healthLoop() {
 		case <-d.stop:
 			return
 		case <-ticker.C:
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			if err := d.DB.PingContext(ctx); err != nil {
-				slog.Warn("dbruntime: health check failed", "driver", d.cfg.Driver, "err", err)
+			if d.circuit != nil && !d.circuit.Allow() {
+				continue // circuit open — fail fast, skip ping
 			}
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			err := d.DB.PingContext(ctx)
 			cancel()
+			if err != nil {
+				slog.Warn("dbruntime: health check failed", "driver", d.cfg.Driver, "err", err)
+				if d.circuit != nil {
+					d.circuit.RecordFailure(err)
+				}
+			} else if d.circuit != nil {
+				d.circuit.RecordSuccess()
+			}
 		}
 	}
+}
+
+// CircuitStats returns a snapshot of the circuit breaker state for metrics/observability.
+// Returns nil if no circuit breaker is configured.
+func (d *DB) CircuitStats() *CircuitStats {
+	if d.circuit == nil {
+		return nil
+	}
+	s := d.circuit.Stats()
+	return &s
 }

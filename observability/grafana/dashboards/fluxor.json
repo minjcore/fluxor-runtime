@@ -4,133 +4,503 @@
   "version": 1,
   "schemaVersion": 38,
   "refresh": "5s",
-  "time": { "from": "now-15m", "to": "now" },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
   "panels": [
     {
       "id": 1,
       "type": "stat",
       "title": "RPS (requests/sec)",
-      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
-      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 5000, "color": "yellow" }, { "value": 9000, "color": "red" }] } } },
-      "targets": [{ "expr": "rate(fluxor_http_requests_total[30s])", "legendFormat": "RPS" }]
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 5000,
+                "color": "yellow"
+              },
+              {
+                "value": 9000,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(fluxor_http_requests_total[30s]))",
+          "legendFormat": "RPS"
+        }
+      ]
     },
     {
       "id": 2,
       "type": "stat",
       "title": "Goroutines",
-      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
-      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 1000, "color": "yellow" }, { "value": 2000, "color": "red" }] } } },
-      "targets": [{ "expr": "go_goroutines", "legendFormat": "goroutines" }]
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "options": {
+        "colorMode": "background",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 1000,
+                "color": "yellow"
+              },
+              {
+                "value": 2000,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_goroutines",
+          "legendFormat": "goroutines"
+        }
+      ]
     },
     {
       "id": 3,
       "type": "stat",
       "title": "Heap Alloc",
-      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
-      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 104857600, "color": "yellow" }, { "value": 524288000, "color": "red" }] } } },
-      "targets": [{ "expr": "go_memstats_alloc_bytes", "legendFormat": "heap" }]
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "options": {
+        "colorMode": "background",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 104857600,
+                "color": "yellow"
+              },
+              {
+                "value": 524288000,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_memstats_alloc_bytes",
+          "legendFormat": "heap"
+        }
+      ]
     },
     {
       "id": 4,
       "type": "stat",
       "title": "GC Pause (p99)",
-      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
-      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 0.01, "color": "yellow" }, { "value": 0.1, "color": "red" }] } } },
-      "targets": [{ "expr": "go_gc_duration_seconds{quantile=\"1.0\"}", "legendFormat": "GC p99" }]
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "options": {
+        "colorMode": "background",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 0.01,
+                "color": "yellow"
+              },
+              {
+                "value": 0.1,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_gc_duration_seconds{quantile=\"1.0\"}",
+          "legendFormat": "GC p99"
+        }
+      ]
     },
     {
       "id": 5,
       "type": "stat",
       "title": "CPU seconds/s",
-      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
-      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 2, "color": "yellow" }, { "value": 4, "color": "red" }] } } },
-      "targets": [{ "expr": "rate(process_cpu_seconds_total[30s])", "legendFormat": "CPU cores" }]
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "options": {
+        "colorMode": "background",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 2,
+                "color": "yellow"
+              },
+              {
+                "value": 4,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total[30s])",
+          "legendFormat": "CPU cores"
+        }
+      ]
     },
     {
       "id": 6,
       "type": "stat",
       "title": "EventLoop Processed",
-      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
-      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "fieldConfig": { "defaults": { "unit": "short" } },
-      "targets": [{ "expr": "sum(fluxor_eventloop_processed_messages_total)", "legendFormat": "events processed" }]
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "options": {
+        "colorMode": "background",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 50000000, "color": "yellow" },
+              { "value": 500000000, "color": "red" }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(fluxor_eventloop_processed_messages_total)",
+          "legendFormat": "events processed"
+        }
+      ]
     },
     {
       "id": 7,
       "type": "timeseries",
       "title": "Request Rate",
-      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
-      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } } },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      },
       "targets": [
-        { "expr": "rate(fluxor_http_requests_total[30s])", "legendFormat": "total" },
-        { "expr": "rate(fluxor_http_requests_total{status=~\"2..\"}[30s])", "legendFormat": "2xx" },
-        { "expr": "rate(fluxor_http_requests_total{status=~\"5..\"}[30s])", "legendFormat": "5xx" }
+        {
+          "expr": "rate(fluxor_http_requests_total[30s])",
+          "legendFormat": "total"
+        },
+        {
+          "expr": "rate(fluxor_http_requests_total{status=~\"2..\"}[30s])",
+          "legendFormat": "2xx"
+        },
+        {
+          "expr": "rate(fluxor_http_requests_total{status=~\"5..\"}[30s])",
+          "legendFormat": "5xx"
+        }
       ]
     },
     {
       "id": 8,
       "type": "timeseries",
       "title": "Latency (p50 / p95 / p99)",
-      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
-      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } } },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      },
       "targets": [
-        { "expr": "histogram_quantile(0.50, rate(fluxor_http_request_duration_seconds_bucket[30s]))", "legendFormat": "p50" },
-        { "expr": "histogram_quantile(0.95, rate(fluxor_http_request_duration_seconds_bucket[30s]))", "legendFormat": "p95" },
-        { "expr": "histogram_quantile(0.99, rate(fluxor_http_request_duration_seconds_bucket[30s]))", "legendFormat": "p99" }
+        {
+          "expr": "histogram_quantile(0.50, rate(fluxor_http_request_duration_seconds_bucket[30s]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(fluxor_http_request_duration_seconds_bucket[30s]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(fluxor_http_request_duration_seconds_bucket[30s]))",
+          "legendFormat": "p99"
+        }
       ]
     },
     {
       "id": 9,
       "type": "timeseries",
       "title": "Memory",
-      "gridPos": { "x": 0, "y": 12, "w": 8, "h": 7 },
-      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "lineWidth": 2 } } },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      },
       "targets": [
-        { "expr": "go_memstats_alloc_bytes", "legendFormat": "heap in-use" },
-        { "expr": "go_memstats_sys_bytes", "legendFormat": "sys" },
-        { "expr": "go_memstats_heap_inuse_bytes", "legendFormat": "heap inuse" }
+        {
+          "expr": "go_memstats_alloc_bytes",
+          "legendFormat": "heap in-use"
+        },
+        {
+          "expr": "go_memstats_sys_bytes",
+          "legendFormat": "sys"
+        },
+        {
+          "expr": "go_memstats_heap_inuse_bytes",
+          "legendFormat": "heap inuse"
+        }
       ]
     },
     {
       "id": 10,
       "type": "timeseries",
       "title": "Goroutines",
-      "gridPos": { "x": 8, "y": 12, "w": 8, "h": 7 },
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } },
-      "targets": [{ "expr": "go_goroutines", "legendFormat": "goroutines" }]
+      "gridPos": {
+        "x": 8,
+        "y": 12,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_goroutines",
+          "legendFormat": "goroutines"
+        }
+      ]
     },
     {
       "id": 11,
       "type": "timeseries",
       "title": "GC Duration",
-      "gridPos": { "x": 16, "y": 12, "w": 8, "h": 7 },
-      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } } },
+      "gridPos": {
+        "x": 16,
+        "y": 12,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      },
       "targets": [
-        { "expr": "go_gc_duration_seconds{quantile=\"0.5\"}", "legendFormat": "p50" },
-        { "expr": "go_gc_duration_seconds{quantile=\"0.75\"}", "legendFormat": "p75" },
-        { "expr": "go_gc_duration_seconds{quantile=\"1.0\"}", "legendFormat": "p99" }
+        {
+          "expr": "go_gc_duration_seconds{quantile=\"0.5\"}",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "go_gc_duration_seconds{quantile=\"0.75\"}",
+          "legendFormat": "p75"
+        },
+        {
+          "expr": "go_gc_duration_seconds{quantile=\"1.0\"}",
+          "legendFormat": "p99"
+        }
       ]
     },
     {
       "id": 12,
       "type": "timeseries",
-      "title": "EventLoop — Queue Length",
-      "gridPos": { "x": 0, "y": 19, "w": 12, "h": 7 },
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } },
-      "targets": [{ "expr": "fluxor_eventloop_queue_length", "legendFormat": "loop {{loop_id}}" }]
+      "title": "EventLoop \u2014 Queue Length",
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "fluxor_eventloop_queue_length",
+          "legendFormat": "loop {{loop_id}}"
+        }
+      ]
     },
     {
       "id": 13,
       "type": "timeseries",
-      "title": "EventLoop — Avg Latency",
-      "gridPos": { "x": 12, "y": 19, "w": 12, "h": 7 },
-      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } } },
-      "targets": [{ "expr": "fluxor_eventloop_latency_seconds", "legendFormat": "loop {{loop_id}}" }]
+      "title": "EventLoop \u2014 Avg Latency",
+      "gridPos": {
+        "x": 12,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "fluxor_eventloop_latency_seconds",
+          "legendFormat": "loop {{loop_id}}"
+        }
+      ]
     }
   ]
 }

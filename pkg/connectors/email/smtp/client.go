@@ -2,7 +2,9 @@ package smtp
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/smtp"
 	"strings"
 	"time"
@@ -82,7 +84,11 @@ func (c *Client) Send(ctx context.Context, in SendInput) SendResult {
 
 	done := make(chan error, 1)
 	go func() {
-		done <- smtp.SendMail(addr, auth, from, to, msg)
+		if c.config.Port == 465 {
+			done <- sendSSL(addr, c.config.Host, auth, from, to, msg)
+		} else {
+			done <- smtp.SendMail(addr, auth, from, to, msg)
+		}
 	}()
 
 	select {
@@ -94,4 +100,39 @@ func (c *Client) Send(ctx context.Context, in SendInput) SendResult {
 		}
 		return SendResult{Success: true, Message: "sent"}
 	}
+}
+
+// sendSSL sends via implicit TLS (port 465 / SMTPS).
+func sendSSL(addr, host string, auth smtp.Auth, from string, to []string, msg []byte) error {
+	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: 15 * time.Second}, "tcp", addr, &tls.Config{ServerName: host})
+	if err != nil {
+		return fmt.Errorf("tls dial: %w", err)
+	}
+	defer conn.Close()
+
+	c, err := smtp.NewClient(conn, host)
+	if err != nil {
+		return fmt.Errorf("smtp client: %w", err)
+	}
+	defer c.Close()
+
+	if err := c.Auth(auth); err != nil {
+		return fmt.Errorf("auth: %w", err)
+	}
+	if err := c.Mail(from); err != nil {
+		return fmt.Errorf("MAIL FROM: %w", err)
+	}
+	for _, r := range to {
+		if err := c.Rcpt(r); err != nil {
+			return fmt.Errorf("RCPT TO %s: %w", r, err)
+		}
+	}
+	w, err := c.Data()
+	if err != nil {
+		return fmt.Errorf("DATA: %w", err)
+	}
+	if _, err := w.Write(msg); err != nil {
+		return fmt.Errorf("write body: %w", err)
+	}
+	return w.Close()
 }

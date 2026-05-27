@@ -10,7 +10,7 @@ import (
 )
 
 // Config represents SMTP (mail) connector configuration.
-// Env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, SMTP_FROM_NAME, SMTP_USE_TLS, SMTP_TIMEOUT.
+// Env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD (or SMTP_PASS), SMTP_FROM, SMTP_FROM_NAME, SMTP_USE_TLS, SMTP_TIMEOUT.
 type Config struct {
 	config.BaseConfig
 
@@ -41,7 +41,7 @@ func DefaultConfig() Config {
 		Host:       os.Getenv("SMTP_HOST"),
 		Port:       port,
 		User:       os.Getenv("SMTP_USER"),
-		Password:   os.Getenv("SMTP_PASSWORD"),
+		Password:   getEnv("SMTP_PASSWORD", os.Getenv("SMTP_PASS")),
 		From:       os.Getenv("SMTP_FROM"),
 		FromName:   getEnv("SMTP_FROM_NAME", "Fluxor Mail"),
 		UseTLS:     useTLS,

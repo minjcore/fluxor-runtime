@@ -1,0 +1,119 @@
+package dbruntime
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"sync"
+	"time"
+)
+
+// Config holds database pool configuration.
+type Config struct {
+	DSN    string // connection string
+	Driver string // "postgres", "mysql", "sqlite3", etc.
+
+	MaxOpen         int           // max open connections (default 25)
+	MaxIdle         int           // max idle connections (default 5)
+	ConnMaxLifetime time.Duration // max connection reuse time (default 5m)
+	ConnMaxIdleTime time.Duration // max idle time (default 10m)
+
+	// HealthCheck interval for background ping + reconnect. 0 = disabled.
+	HealthCheck time.Duration
+}
+
+func (c *Config) setDefaults() {
+	if c.MaxOpen <= 0 {
+		c.MaxOpen = 25
+	}
+	if c.MaxIdle <= 0 {
+		c.MaxIdle = 5
+	}
+	if c.MaxIdle > c.MaxOpen {
+		c.MaxIdle = c.MaxOpen
+	}
+	if c.ConnMaxLifetime <= 0 {
+		c.ConnMaxLifetime = 5 * time.Minute
+	}
+	if c.ConnMaxIdleTime <= 0 {
+		c.ConnMaxIdleTime = 10 * time.Minute
+	}
+	if c.HealthCheck <= 0 {
+		c.HealthCheck = 30 * time.Second
+	}
+}
+
+func (c Config) validate() error {
+	if c.DSN == "" {
+		return fmt.Errorf("dbruntime: DSN is required")
+	}
+	if c.Driver == "" {
+		return fmt.Errorf("dbruntime: Driver is required")
+	}
+	return nil
+}
+
+// DB wraps *sql.DB with config and an optional background health-check goroutine.
+// All standard database/sql methods are available via embedding.
+type DB struct {
+	*sql.DB
+	cfg    Config
+	stop   chan struct{}
+	once   sync.Once
+}
+
+// Open opens a database, validates config, pings, and starts the health-check loop.
+func Open(cfg Config) (*DB, error) {
+	if err := cfg.validate(); err != nil {
+		return nil, err
+	}
+	cfg.setDefaults()
+
+	sqlDB, err := sql.Open(cfg.Driver, cfg.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("dbruntime: open: %w", err)
+	}
+	sqlDB.SetMaxOpenConns(cfg.MaxOpen)
+	sqlDB.SetMaxIdleConns(cfg.MaxIdle)
+	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := sqlDB.PingContext(ctx); err != nil {
+		_ = sqlDB.Close()
+		return nil, fmt.Errorf("dbruntime: ping: %w", err)
+	}
+
+	d := &DB{DB: sqlDB, cfg: cfg, stop: make(chan struct{})}
+	if cfg.HealthCheck > 0 {
+		go d.healthLoop()
+	}
+	return d, nil
+}
+
+// Close stops the health-check goroutine and closes the underlying connection pool.
+func (d *DB) Close() error {
+	d.once.Do(func() { close(d.stop) })
+	return d.DB.Close()
+}
+
+// healthLoop pings the DB on the configured interval and logs failures.
+// database/sql reconnects automatically; this loop surfaces persistent failures.
+func (d *DB) healthLoop() {
+	ticker := time.NewTicker(d.cfg.HealthCheck)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-d.stop:
+			return
+		case <-ticker.C:
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if err := d.DB.PingContext(ctx); err != nil {
+				slog.Warn("dbruntime: health check failed", "driver", d.cfg.Driver, "err", err)
+			}
+			cancel()
+		}
+	}
+}

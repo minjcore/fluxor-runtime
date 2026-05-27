@@ -1,0 +1,1 @@
+# Public Static Files Directory

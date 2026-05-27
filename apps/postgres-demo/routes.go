@@ -13,6 +13,7 @@ import (
 	"github.com/fluxorio/fluxor/pkg/core"
 	"github.com/fluxorio/fluxor/pkg/dbruntime"
 	"github.com/fluxorio/fluxor/pkg/web"
+	"github.com/fluxorio/fluxor/pkg/web/dashboard"
 	"github.com/fluxorio/fluxor/pkg/web/middleware/auth"
 	"github.com/valyala/fasthttp"
 )
@@ -44,6 +45,11 @@ func setupWebUI(gocmd core.GoCMD, db *dbruntime.DB, purchaseService *services.Pu
 
 	// Register metrics endpoint
 	server.RegisterMetricsEndpoint()
+
+	// Register dashboard routes (/api/dashboard/metrics, /api/dashboard/health).
+	// This makes the load-test monitor framework work against this server.
+	dashboard.Register(router, "")
+	dashboard.GetMetricsCollector().RegisterHTTPServer("postgres-demo", &serverMetricsAdapter{server})
 
 	// Note: authService and walletService are already initialized and configured in main.go
 	// authService is passed in and already has database and walletService configured
@@ -384,4 +390,30 @@ func setupWebUI(gocmd core.GoCMD, db *dbruntime.DB, purchaseService *services.Pu
 	})
 
 	return server, nil
+}
+
+// serverMetricsAdapter adapts *web.FastHTTPServer to dashboard.HTTPServerMetricsProvider.
+// web.ServerMetrics and dashboard.HTTPServerMetricsData have identical fields.
+type serverMetricsAdapter struct{ s *web.FastHTTPServer }
+
+func (a *serverMetricsAdapter) Metrics() dashboard.HTTPServerMetricsData {
+	m := a.s.Metrics()
+	return dashboard.HTTPServerMetricsData{
+		QueuedRequests:       m.QueuedRequests,
+		RejectedRequests:     m.RejectedRequests,
+		TotalRequests:        m.TotalRequests,
+		SuccessfulRequests:   m.SuccessfulRequests,
+		ErrorRequests:        m.ErrorRequests,
+		QueueCapacity:        m.QueueCapacity,
+		QueueUtilization:     m.QueueUtilization,
+		Workers:              m.Workers,
+		CurrentCCU:           m.CurrentCCU,
+		CCUUtilization:       m.CCUUtilization,
+		BytesSent:            m.BytesSent,
+		BytesReceived:        m.BytesReceived,
+		AverageLatencyMs:     m.AverageLatencyMs,
+		ArrivalRate:          m.ArrivalRate,
+		ExpectedQueueLength:  m.ExpectedQueueLength,
+		LittlesLawValidation: m.LittlesLawValidation,
+	}
 }

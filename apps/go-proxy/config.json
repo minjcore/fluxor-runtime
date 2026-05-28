@@ -1,0 +1,30 @@
+{
+  "server": {
+    "address": ":8080",
+    "readTimeout": "30s",
+    "writeTimeout": "30s",
+    "maxQueue": 10000,
+    "workers": 100
+  },
+  "storage": {
+    "type": "s3",
+    "s3": {
+      "endpoint": "s3.amazonaws.com",
+      "bucket": "go-modules",
+      "region": "us-east-1",
+      "accessKey": "",
+      "secretKey": "",
+      "forcePathStyle": false,
+      "disableSSL": false
+    }
+  },
+  "auth": {
+    "enabled": true,
+    "users": [
+      {
+        "username": "admin",
+        "password": "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZRGdjGj/n3.6aLgPl9u7wz8XBPvKS"
+      }
+    ]
+  }
+}

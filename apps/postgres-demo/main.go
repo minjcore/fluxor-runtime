@@ -29,6 +29,8 @@ type AppConfig struct {
 	MaxIdleConns    int    // Matches "MaxIdleConns" or "maxidleconns" in properties file
 	ConnMaxLifetime string // Matches "ConnMaxLifetime" or "connmaxlifetime" in properties file
 	ConnMaxIdleTime string // Matches "ConnMaxIdleTime" or "connmaxidletime" in properties file
+	TLSCertFile     string // Path to TLS certificate file (PEM)
+	TLSKeyFile      string // Path to TLS private key file (PEM)
 }
 
 type PostgresDemoVerticle struct {
@@ -160,9 +162,13 @@ func (v *PostgresDemoVerticle) Start(ctx core.FluxorContext) error {
 		}
 	}
 
-	// Start HTTP web UI
-	log.Println("\n[Web UI] Starting HTTP server on :8081...")
-	webServer, err := setupWebUI(ctx.GoCMD(), v.db, v.purchaseService, walletService, authService, v)
+	// Start HTTP web UI (HTTPS if TLS cert/key configured)
+	proto := "HTTP"
+	if appConfig.TLSCertFile != "" && appConfig.TLSKeyFile != "" {
+		proto = "HTTPS"
+	}
+	log.Printf("\n[Web UI] Starting %s server on :8081...", proto)
+	webServer, err := setupWebUI(ctx.GoCMD(), v.db, v.purchaseService, walletService, authService, v, appConfig.TLSCertFile, appConfig.TLSKeyFile)
 	if err != nil {
 		log.Printf("Warning: Failed to setup web UI: %v", err)
 	} else {

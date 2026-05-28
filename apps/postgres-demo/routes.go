@@ -37,9 +37,17 @@ const (
 )
 
 // setupWebUI sets up the HTTP web server with MVC architecture
-func setupWebUI(gocmd core.GoCMD, db *dbruntime.DB, purchaseService *services.PurchaseService, walletService *services.WalletService, authService *services.AuthService, verticle *PostgresDemoVerticle) (*web.FastHTTPServer, error) {
+func setupWebUI(gocmd core.GoCMD, db *dbruntime.DB, purchaseService *services.PurchaseService, walletService *services.WalletService, authService *services.AuthService, verticle *PostgresDemoVerticle, tlsCertFile, tlsKeyFile string) (*web.FastHTTPServer, error) {
 	// Create HTTP server config
-	cfg := web.DefaultFastHTTPServerConfig(":8081")
+	addr := ":8081"
+	cfg := web.DefaultFastHTTPServerConfig(addr)
+	if tlsCertFile != "" && tlsKeyFile != "" {
+		tlsCfg, err := web.NewTLSConfigFromFiles(tlsCertFile, tlsKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("TLS config: %w", err)
+		}
+		cfg.TLSConfig = tlsCfg
+	}
 	server := web.NewFastHTTPServer(gocmd, cfg)
 	router := server.FastRouter()
 

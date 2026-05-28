@@ -3,6 +3,7 @@ package entrypoint
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"sync"
@@ -27,6 +28,9 @@ type MainVerticle struct {
 	deploymentIDs []string
 
 	cleanup func() error // Cleanup function from BootstrapHook
+
+	adminSocketPath string
+	adminCloser     io.Closer
 }
 
 // MainVerticleOptions configures NewMainVerticleWithOptions.
@@ -55,6 +59,11 @@ type MainVerticleOptions struct {
 	// Profile enables runtime profiles (e.g. "gke-autopilot"). When set to "gke-autopilot", ShutdownTimeout
 	// defaults to 25s and config "fluxor.profile" is set so verticles can enable JSON logging, strict readyz, etc.
 	Profile string
+
+	// AdminSocketPath is the Unix domain socket path for the management API.
+	// When set, the running process accepts deploy/undeploy/list commands from fluxorctl.
+	// Example: "/tmp/fluxor.sock"
+	AdminSocketPath string
 }
 
 // Option mutates MainVerticleOptions (Go option pattern).
@@ -155,11 +164,12 @@ func NewMainVerticleWithOptions(configPath string, opts ...Option) (*MainVerticl
 	}
 
 	return &MainVerticle{
-		ctx:     rootCtx,
-		cancel:  cancel,
-		gocmd:   vx,
-		cfg:     cfg,
-		cleanup: cleanup,
+		ctx:             rootCtx,
+		cancel:          cancel,
+		gocmd:           vx,
+		cfg:             cfg,
+		cleanup:         cleanup,
+		adminSocketPath: o.AdminSocketPath,
 	}, nil
 }
 
@@ -197,10 +207,12 @@ func (m *MainVerticle) DeployVerticle(v Verticle) (string, error) {
 // Start blocks until SIGINT/SIGTERM then stops the app.
 func (m *MainVerticle) Start() error {
 	sig := make(chan os.Signal, 1)
-	// On Windows, os.Interrupt may not work, so we also listen for SIGTERM
-	// On Unix, both os.Interrupt (Ctrl+C) and SIGTERM work
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer signal.Stop(sig)
+
+	if m.adminSocketPath != "" {
+		m.adminCloser = startAdminSocket(m, m.adminSocketPath)
+	}
 
 	logger := core.NewDefaultLogger()
 	logger.Info("Application started - press Ctrl+C to shutdown")
@@ -214,6 +226,9 @@ func (m *MainVerticle) Start() error {
 func (m *MainVerticle) Stop() error {
 	logger := core.NewDefaultLogger()
 	logger.Info("Shutting down application...")
+	if m.adminCloser != nil {
+		m.adminCloser.Close()
+	}
 	m.cancel()
 
 	// Run cleanup function from BootstrapHook (e.g., shutdown NATS server)

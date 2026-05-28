@@ -194,6 +194,15 @@ func NewMainVerticleWithOptions(configPath string, opts ...Option) (*MainVerticl
 // GoCMD returns the underlying GoCMD (advanced usage).
 func (m *MainVerticle) GoCMD() core.GoCMD { return m.gocmd }
 
+// SpawnSubprocess starts binaryPath as a subprocess verticle.
+// Requires EnableSubprocessManager: true in options.
+func (m *MainVerticle) SpawnSubprocess(binaryPath string) (string, error) {
+	if m.subprocMgr == nil {
+		return "", fmt.Errorf("SubprocessManager not enabled; set EnableSubprocessManager: true")
+	}
+	return m.subprocMgr.Spawn(binaryPath)
+}
+
 // Config returns the loaded config map (read-only by convention).
 func (m *MainVerticle) Config() map[string]any { return m.cfg }
 

@@ -12,19 +12,25 @@ import (
 	"github.com/fluxorio/fluxor/pkg/entrypoint"
 )
 
-const usage = `fluxorctl — manage Fluxor verticles via Go plugin (.so/.dylib).
+const usage = `fluxorctl — manage Fluxor verticles (plugin or subprocess).
 
 Standalone (starts a new process):
   fluxorctl deploy <plugin.{so,dylib}>
   fluxorctl run    <plugin.{so,dylib}>
 
-Hot-deploy into a running process via admin socket:
+Plugin hot-deploy into a running process:
   fluxorctl deploy   --target <socket> <plugin.{so,dylib}>
   fluxorctl undeploy --target <socket> <deployment-id>
-  fluxorctl list     --target <socket>
 
-The plugin must export: func NewVerticle() core.Verticle
-Build: go build -buildmode=plugin -o myverticle.so <plugin package>
+Subprocess hot-deploy into a running process:
+  fluxorctl spawn  --target <socket> <binary>
+  fluxorctl kill   --target <socket> <subprocess-id>
+
+List all deployments (plugins + subprocesses):
+  fluxorctl list --target <socket>
+
+Plugin build: go build -buildmode=plugin -o myverticle.so <package>
+Subprocess build: go build -o myverticle <package>  (binary calls entrypoint.RunSubprocess)
 `
 
 func main() {
@@ -83,6 +89,38 @@ func main() {
 		}
 		resp, err := entrypoint.AdminDial(target, entrypoint.AdminRequest{
 			Cmd: "undeploy",
+			ID:  rest[0],
+		})
+		if err != nil {
+			fatalf("dial %s: %v\n", target, err)
+		}
+		printResp(resp)
+
+	case "spawn":
+		if target == "" {
+			fatalf("spawn requires --target <socket>\n")
+		}
+		if len(rest) == 0 {
+			fatalf("spawn: missing binary path\n")
+		}
+		resp, err := entrypoint.AdminDial(target, entrypoint.AdminRequest{
+			Cmd:  "spawn",
+			Path: rest[0],
+		})
+		if err != nil {
+			fatalf("dial %s: %v\n", target, err)
+		}
+		printResp(resp)
+
+	case "kill":
+		if target == "" {
+			fatalf("kill requires --target <socket>\n")
+		}
+		if len(rest) == 0 {
+			fatalf("kill: missing subprocess ID\n")
+		}
+		resp, err := entrypoint.AdminDial(target, entrypoint.AdminRequest{
+			Cmd: "kill",
 			ID:  rest[0],
 		})
 		if err != nil {

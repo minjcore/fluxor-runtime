@@ -89,11 +89,45 @@ func handleAdminConn(m *MainVerticle, conn net.Conn) {
 		log.Printf("[admin] undeployed %s", req.ID)
 		_ = enc.Encode(AdminResponse{OK: true})
 
+	case "spawn":
+		if m.subprocMgr == nil {
+			_ = enc.Encode(AdminResponse{OK: false, Err: "subprocess manager not enabled (set EnableSubprocessManager: true)"})
+			return
+		}
+		id, err := m.subprocMgr.Spawn(req.Path)
+		if err != nil {
+			_ = enc.Encode(AdminResponse{OK: false, Err: fmt.Sprintf("spawn: %v", err)})
+			return
+		}
+		log.Printf("[admin] spawned %s → %s", req.Path, id)
+		_ = enc.Encode(AdminResponse{OK: true, ID: id})
+
+	case "kill":
+		if m.subprocMgr == nil {
+			_ = enc.Encode(AdminResponse{OK: false, Err: "subprocess manager not enabled"})
+			return
+		}
+		if req.ID == "" {
+			_ = enc.Encode(AdminResponse{OK: false, Err: "id required"})
+			return
+		}
+		if err := m.subprocMgr.Kill(req.ID); err != nil {
+			_ = enc.Encode(AdminResponse{OK: false, Err: err.Error()})
+			return
+		}
+		log.Printf("[admin] killed subprocess %s", req.ID)
+		_ = enc.Encode(AdminResponse{OK: true})
+
 	case "list":
 		m.mu.Lock()
-		ids := make([]string, len(m.deploymentIDs))
-		copy(ids, m.deploymentIDs)
+		pluginIDs := make([]string, len(m.deploymentIDs))
+		copy(pluginIDs, m.deploymentIDs)
 		m.mu.Unlock()
+
+		ids := pluginIDs
+		if m.subprocMgr != nil {
+			ids = append(ids, m.subprocMgr.List()...)
+		}
 		_ = enc.Encode(AdminResponse{OK: true, IDs: ids})
 
 	default:

@@ -31,6 +31,8 @@ type MainVerticle struct {
 
 	adminSocketPath string
 	adminCloser     io.Closer
+
+	subprocMgr *SubprocessManager
 }
 
 // MainVerticleOptions configures NewMainVerticleWithOptions.
@@ -64,6 +66,11 @@ type MainVerticleOptions struct {
 	// When set, the running process accepts deploy/undeploy/list commands from fluxorctl.
 	// Example: "/tmp/fluxor.sock"
 	AdminSocketPath string
+
+	// EnableSubprocessManager starts an embedded NATS server and creates a
+	// SubprocessManager so verticles can be deployed as subprocess binaries
+	// via `fluxorctl spawn --target <socket> <binary>`.
+	EnableSubprocessManager bool
 }
 
 // Option mutates MainVerticleOptions (Go option pattern).
@@ -163,14 +170,25 @@ func NewMainVerticleWithOptions(configPath string, opts ...Option) (*MainVerticl
 		return nil, err
 	}
 
-	return &MainVerticle{
+	mv := &MainVerticle{
 		ctx:             rootCtx,
 		cancel:          cancel,
 		gocmd:           vx,
 		cfg:             cfg,
 		cleanup:         cleanup,
 		adminSocketPath: o.AdminSocketPath,
-	}, nil
+	}
+
+	if o.EnableSubprocessManager {
+		natsURL, _ := cfg["nats_url"].(string)
+		if natsURL == "" {
+			cancel()
+			return nil, fmt.Errorf("EnableSubprocessManager requires BootstrapHook: StartEmbeddedNATS (nats_url not in config)")
+		}
+		mv.subprocMgr = NewSubprocessManager(natsURL)
+	}
+
+	return mv, nil
 }
 
 // GoCMD returns the underlying GoCMD (advanced usage).
@@ -228,6 +246,9 @@ func (m *MainVerticle) Stop() error {
 	logger.Info("Shutting down application...")
 	if m.adminCloser != nil {
 		m.adminCloser.Close()
+	}
+	if m.subprocMgr != nil {
+		m.subprocMgr.StopAll()
 	}
 	m.cancel()
 

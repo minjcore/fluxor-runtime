@@ -205,7 +205,7 @@ func (h *ProxyHandler) handleGoGet(ctx *web.FastRequestContext, module string) e
 	if host == "" {
 		host = "go.nivic.dev"
 	}
-	importPath := host + "/" + module
+	importPath := module
 	proxyURL := "https://" + host
 
 	html := fmt.Sprintf(`<!DOCTYPE html><html><head>

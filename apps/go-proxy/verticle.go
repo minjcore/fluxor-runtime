@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/fluxorio/fluxor/pkg/config"
@@ -225,8 +226,9 @@ func (v *GoProxyVerticle) serveStaticFiles(fsys fs.FS) web.FastRequestHandler {
 			contentType = "text/css"
 		}
 
-		// Read file from embedded FS
-		content, err := fs.ReadFile(fsys, filepath[1:]) // Remove leading slash
+		// Read file from embedded FS (strip leading slash if present)
+		name := strings.TrimPrefix(filepath, "/")
+		content, err := fs.ReadFile(fsys, name)
 		if err != nil {
 			return ctx.Text(404, "Not Found")
 		}

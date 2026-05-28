@@ -227,20 +227,22 @@ func (r *FastRouter) matchPath(pattern, path string) bool {
 	patternParts := strings.Split(pattern, "/")
 	pathParts := strings.Split(path, "/")
 
-	if len(patternParts) != len(pathParts) {
-		return false
-	}
-
 	for i, part := range patternParts {
-		if strings.HasPrefix(part, ":") {
-			continue // Parameter
+		if strings.HasPrefix(part, "*") {
+			return true // wildcard matches rest of path (including zero segments)
 		}
-		if part != pathParts[i] {
+		if strings.HasPrefix(part, ":") {
+			if i >= len(pathParts) {
+				return false
+			}
+			continue
+		}
+		if i >= len(pathParts) || part != pathParts[i] {
 			return false
 		}
 	}
 
-	return true
+	return len(patternParts) == len(pathParts)
 }
 
 func (r *FastRouter) extractParams(pattern, path string, params map[string]string) {
@@ -248,6 +250,13 @@ func (r *FastRouter) extractParams(pattern, path string, params map[string]strin
 	pathParts := strings.Split(path, "/")
 
 	for i, part := range patternParts {
+		if strings.HasPrefix(part, "*") {
+			paramName := strings.TrimPrefix(part, "*")
+			if i < len(pathParts) {
+				params[paramName] = strings.Join(pathParts[i:], "/")
+			}
+			return
+		}
 		if strings.HasPrefix(part, ":") {
 			paramName := strings.TrimPrefix(part, ":")
 			if i < len(pathParts) {

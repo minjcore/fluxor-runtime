@@ -249,7 +249,8 @@ func (m *MainVerticle) Start() error {
 	return m.Stop()
 }
 
-// Stop gracefully shuts down: cancels root context and closes GoCMD (undeploys verticles).
+// Stop gracefully shuts down: closes GoCMD first (waits for verticles to drain),
+// then cancels root context and runs cleanup.
 func (m *MainVerticle) Stop() error {
 	logger := core.NewDefaultLogger()
 	logger.Info("Shutting down application...")
@@ -259,6 +260,15 @@ func (m *MainVerticle) Stop() error {
 	if m.subprocMgr != nil {
 		m.subprocMgr.StopAll()
 	}
+
+	// Close GoCMD BEFORE cancelling root context.
+	// UndeployVerticle() watches rootCtx.Done() and returns early if cancelled —
+	// cancelling first would skip verticle Stop() calls and break graceful drain.
+	err := m.gocmd.Close()
+	if err == nil {
+		logger.Info("Application shutdown complete")
+	}
+
 	m.cancel()
 
 	// Run cleanup function from BootstrapHook (e.g., shutdown NATS server)
@@ -268,10 +278,6 @@ func (m *MainVerticle) Stop() error {
 		}
 	}
 
-	err := m.gocmd.Close()
-	if err == nil {
-		logger.Info("Application shutdown complete")
-	}
 	return err
 }
 
